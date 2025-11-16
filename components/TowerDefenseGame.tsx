@@ -430,14 +430,17 @@ const TowerDefenseGame: React.FC = () => {
 
     const spawnInterval = setInterval(() => {
       if (enemiesSpawnedInWave < waveConfig.count) {
-        const newEnemy = createEnemy(
-          waveConfig.type,
-          `enemy-${enemyCounterRef.current++}`
-        );
-        setGameState(prev => ({
-          ...prev,
-          enemies: [...prev.enemies, newEnemy]
-        }));
+        setGameState(prev => {
+          const newEnemy = createEnemy(
+            waveConfig.type,
+            `enemy-${enemyCounterRef.current++}`,
+            prev.path
+          );
+          return {
+            ...prev,
+            enemies: [...prev.enemies, newEnemy]
+          };
+        });
         setEnemiesSpawnedInWave(prev => prev + 1);
       }
     }, waveConfig.interval);

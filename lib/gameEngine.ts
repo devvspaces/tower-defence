@@ -1,11 +1,11 @@
 import { GameState, Enemy, Tower, Projectile, Position, StatusEffect, TowerTypeId, EnemyTypeId } from '@/types/game';
 import { ENEMY_PATH, ENEMY_TYPES, TOWER_TYPES } from './gameConfig';
 
-export function createEnemy(type: EnemyTypeId, id: string): Enemy {
+export function createEnemy(type: EnemyTypeId, id: string, path: Position[]): Enemy {
   const enemyConfig = ENEMY_TYPES[type];
   return {
     id,
-    position: { ...ENEMY_PATH[0] },
+    position: { ...path[0] },
     health: enemyConfig.health,
     maxHealth: enemyConfig.health,
     speed: enemyConfig.speed,
