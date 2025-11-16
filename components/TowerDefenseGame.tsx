@@ -62,7 +62,7 @@ const TowerDefenseGame: React.FC = () => {
 
   const [waveInProgress, setWaveInProgress] = useState(false);
   const [enemiesSpawnedInWave, setEnemiesSpawnedInWave] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'physical' | 'magic' | 'support'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'physical' | 'magic' | 'support' | 'utility' | 'economic' | 'hybrid'>('all');
   const lastTimeRef = useRef<number>(Date.now());
   const enemyCounterRef = useRef<number>(0);
   const towerCounterRef = useRef<number>(0);
@@ -146,7 +146,14 @@ const TowerDefenseGame: React.FC = () => {
           hasEnemyReachedEnd(enemy, newState.path)
         );
 
-        newState.lives -= enemiesThatReached.length;
+        // Apply scaled damage and gold theft
+        enemiesThatReached.forEach(enemy => {
+          newState.lives -= enemy.damage; // Scaled damage based on enemy type
+          if (enemy.stealsGold && enemy.stealsGold > 0) {
+            newState.money = Math.max(0, newState.money - enemy.stealsGold);
+          }
+        });
+
         newState.enemies = newState.enemies.filter(
           enemy => !hasEnemyReachedEnd(enemy, newState.path)
         );
@@ -169,20 +176,23 @@ const TowerDefenseGame: React.FC = () => {
               );
               newProjectiles.push(projectile);
 
-              // Play tower sound
-              const soundMap: { [key: string]: any } = {
-                basic: 'basicShoot',
-                sniper: 'sniperShoot',
-                cannon: 'cannonShoot',
-                fireMage: 'fireShoot',
-                lightning: 'lightningShoot',
-                arcane: 'arcaneShoot',
-                iceTower: 'iceShoot',
-                slow: 'slowShoot',
-                poison: 'poisonShoot'
-              };
-              if (throttleSound(tower.type, 150)) {
-                playSound(soundMap[tower.type] || 'basicShoot');
+              // Play tower sound (skip non-attacking towers)
+              if (tower.damage > 0) {
+                const soundMap: { [key: string]: any } = {
+                  basic: 'basicShoot',
+                  sniper: 'sniperShoot',
+                  cannon: 'cannonShoot',
+                  fireMage: 'fireShoot',
+                  lightning: 'lightningShoot',
+                  arcane: 'arcaneShoot',
+                  iceTower: 'iceShoot',
+                  slow: 'slowShoot',
+                  poison: 'poisonShoot',
+                  hybrid: 'arcaneShoot'
+                };
+                if (throttleSound(tower.type, 150)) {
+                  playSound(soundMap[tower.type] || 'basicShoot');
+                }
               }
 
               return { ...tower, lastFireTime: currentTime };
@@ -204,7 +214,7 @@ const TowerDefenseGame: React.FC = () => {
 
         // Check for projectile hits
         const projectilesToRemove: string[] = [];
-        const chainLightningHits: { enemyId: string; damage: number }[] = [];
+        const chainLightningHits: { enemyId: string; damage: number; damageType: 'physical' | 'magic' | 'hybrid' }[] = [];
 
         newState.projectiles.forEach(projectile => {
           const targetEnemy = newState.enemies.find(e => e.id === projectile.targetId);
@@ -220,6 +230,11 @@ const TowerDefenseGame: React.FC = () => {
             if (throttleSound('enemyHit', 50)) {
               playSound('enemyHit');
             }
+
+            // Determine damage type based on tower category
+            const damageType = projectile.towerCategory === 'hybrid' ? 'hybrid'
+              : projectile.towerCategory === 'physical' ? 'physical'
+              : 'magic';
 
             // Handle special effects
             if (projectile.specialEffect) {
@@ -240,6 +255,7 @@ const TowerDefenseGame: React.FC = () => {
                   targetEnemy.position,
                   effect.value,
                   projectile.damage,
+                  damageType,
                   statusEffect
                 );
               } else if (effect.type === 'chain') {
@@ -248,7 +264,8 @@ const TowerDefenseGame: React.FC = () => {
                   targetEnemy,
                   effect.value + 1,
                   projectile.damage,
-                  100
+                  100,
+                  damageType
                 );
                 chainLightningHits.push(...hits);
               } else if (effect.type === 'freeze') {
@@ -261,7 +278,7 @@ const TowerDefenseGame: React.FC = () => {
                 const enemyIndex = newState.enemies.findIndex(e => e.id === targetEnemy.id);
                 if (enemyIndex >= 0) {
                   newState.enemies[enemyIndex] = applyStatusEffect(
-                    damageEnemy(newState.enemies[enemyIndex], projectile.damage),
+                    damageEnemy(newState.enemies[enemyIndex], projectile.damage, damageType),
                     freezeEffect
                   );
                 }
@@ -275,7 +292,7 @@ const TowerDefenseGame: React.FC = () => {
                 const enemyIndex = newState.enemies.findIndex(e => e.id === targetEnemy.id);
                 if (enemyIndex >= 0) {
                   newState.enemies[enemyIndex] = applyStatusEffect(
-                    damageEnemy(newState.enemies[enemyIndex], projectile.damage),
+                    damageEnemy(newState.enemies[enemyIndex], projectile.damage, damageType),
                     slowEffect
                   );
                 }
@@ -289,7 +306,7 @@ const TowerDefenseGame: React.FC = () => {
                 const enemyIndex = newState.enemies.findIndex(e => e.id === targetEnemy.id);
                 if (enemyIndex >= 0) {
                   newState.enemies[enemyIndex] = applyStatusEffect(
-                    damageEnemy(newState.enemies[enemyIndex], projectile.damage),
+                    damageEnemy(newState.enemies[enemyIndex], projectile.damage, damageType),
                     poisonEffect
                   );
                 }
@@ -299,20 +316,22 @@ const TowerDefenseGame: React.FC = () => {
               if (enemyIndex >= 0) {
                 newState.enemies[enemyIndex] = damageEnemy(
                   newState.enemies[enemyIndex],
-                  projectile.damage
+                  projectile.damage,
+                  damageType
                 );
               }
             }
           }
         });
 
-        // Apply chain lightning damage
+        // Apply chain lightning damage with damage type
         chainLightningHits.forEach(hit => {
           const enemyIndex = newState.enemies.findIndex(e => e.id === hit.enemyId);
           if (enemyIndex >= 0) {
             newState.enemies[enemyIndex] = damageEnemy(
               newState.enemies[enemyIndex],
-              hit.damage
+              hit.damage,
+              hit.damageType
             );
           }
         });
@@ -331,6 +350,13 @@ const TowerDefenseGame: React.FC = () => {
         deadEnemies.forEach(enemy => {
           moneyGained += enemy.value;
           scoreGained += enemy.value * 10;
+        });
+
+        // Passive income from economic towers
+        newState.towers.forEach(tower => {
+          if (tower.specialAbility?.type === 'income') {
+            moneyGained += tower.specialAbility.value * deltaTime;
+          }
         });
 
         newState.enemies = newState.enemies.filter(enemy => !isEnemyDead(enemy));
@@ -446,25 +472,21 @@ const TowerDefenseGame: React.FC = () => {
         ctx.fill();
       }
 
-      const colors: Record<string, string> = {
-        basic: '#ef4444',
-        sniper: '#dc2626',
-        cannon: '#f97316',
-        fireMage: '#8b5cf6',
-        lightning: '#a78bfa',
-        arcane: '#6366f1',
-        iceTower: '#0ea5e9',
-        slow: '#06b6d4',
-        poison: '#10b981'
-      };
+      // Get tower config for icon
+      const towerConfig = TOWER_TYPES.find(t => t.type === tower.type);
+      const icon = towerConfig?.icon || '🏰';
 
-      ctx.fillStyle = colors[tower.type] || '#3b82f6';
-      ctx.beginPath();
-      ctx.arc(tower.position.x, tower.position.y, 15, 0, Math.PI * 2);
-      ctx.fill();
+      // Draw tower icon/emoji
+      ctx.font = '28px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(icon, tower.position.x, tower.position.y);
 
+      // Draw border around tower
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tower.position.x, tower.position.y, 18, 0, Math.PI * 2);
       ctx.stroke();
     });
 
@@ -839,7 +861,7 @@ const TowerDefenseGame: React.FC = () => {
             <h2 className="text-2xl font-bold text-cyan-400 mb-4 text-center retro-text">DEFENSE SYSTEMS</h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
-              {['all', 'physical', 'magic', 'support'].map(cat => (
+              {['all', 'physical', 'magic', 'support', 'utility', 'economic', 'hybrid'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => {
@@ -852,7 +874,13 @@ const TowerDefenseGame: React.FC = () => {
                       : 'bg-slate-700 text-white hover:bg-slate-600'
                   }`}
                 >
-                  {cat === 'all' ? 'ALL' : cat === 'physical' ? '⚔️ PHY' : cat === 'magic' ? '✨ MAG' : '🛡️ SUP'}
+                  {cat === 'all' ? 'ALL'
+                    : cat === 'physical' ? '⚔️ PHY'
+                    : cat === 'magic' ? '✨ MAG'
+                    : cat === 'support' ? '🛡️ SUP'
+                    : cat === 'utility' ? '📡 UTL'
+                    : cat === 'economic' ? '💰 ECO'
+                    : '🌟 HYB'}
                 </button>
               ))}
             </div>

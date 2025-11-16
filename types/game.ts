@@ -10,7 +10,8 @@ export interface StatusEffect {
   appliedAt: number; // timestamp
 }
 
-export type EnemyTypeId = 'basic' | 'fast' | 'tank' | 'swarm' | 'elite' | 'boss' | 'healer' | 'flying';
+export type EnemyTypeId = 'basic' | 'fast' | 'tank' | 'swarm' | 'elite' | 'boss' | 'healer' | 'flying'
+  | 'armored' | 'ethereal' | 'crystal' | 'demolisher' | 'regenerator' | 'speedDemon' | 'goldThief' | 'juggernaut';
 
 export interface Enemy {
   id: string;
@@ -23,14 +24,24 @@ export interface Enemy {
   value: number; // Money earned when killed
   type: EnemyTypeId;
   statusEffects: StatusEffect[];
+  damage: number; // Damage dealt to home when reaching end
+  physicalResist: number; // 0-1, 1 = 100% resist
+  magicResist: number; // 0-1, 1 = 100% resist
+  attacksTowers?: boolean; // Can this enemy attack towers
+  towerDamage?: number; // Damage dealt to towers
+  attackRange?: number; // Range to attack towers
+  regeneration?: number; // HP regen per second (percentage of max HP)
+  speedBoost?: boolean; // Speed increases as health decreases
+  stealsGold?: number; // Amount of gold stolen if reaches end
 }
 
-export type TowerCategory = 'physical' | 'magic' | 'support';
+export type TowerCategory = 'physical' | 'magic' | 'support' | 'utility' | 'economic' | 'hybrid';
 
 export type TowerTypeId =
   | 'basic' | 'sniper' | 'cannon' // Physical
   | 'fireMage' | 'lightning' | 'arcane' // Magic Attack
-  | 'iceTower' | 'poison' | 'slow'; // Support/Magic Defense
+  | 'iceTower' | 'poison' | 'slow' // Support/Magic Defense
+  | 'amplifier' | 'goldmine' | 'hybrid'; // Utility, Economic, Hybrid
 
 export interface Tower {
   id: string;
@@ -43,9 +54,11 @@ export interface Tower {
   type: TowerTypeId;
   category: TowerCategory;
   target: string | null; // Enemy ID
+  health?: number; // Tower health (for tower-attacking enemies)
+  maxHealth?: number;
   specialAbility?: {
-    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison';
-    value: number; // AOE radius, chain count, slow %, etc.
+    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison' | 'buff' | 'income' | 'hybrid';
+    value: number; // AOE radius, chain count, slow %, buff %, income rate, etc.
   };
 }
 
@@ -56,8 +69,9 @@ export interface Projectile {
   damage: number;
   speed: number;
   towerType: TowerTypeId;
+  towerCategory: TowerCategory; // For resistance calculation
   specialEffect?: {
-    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison';
+    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison' | 'buff' | 'income' | 'hybrid';
     value: number;
   };
 }
@@ -89,7 +103,7 @@ export interface TowerType {
   fireRate: number;
   description: string;
   specialAbility?: {
-    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison';
+    type: 'aoe' | 'chain' | 'slow' | 'freeze' | 'poison' | 'buff' | 'income' | 'hybrid';
     value: number;
     description: string;
   };

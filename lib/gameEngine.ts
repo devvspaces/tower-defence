@@ -13,7 +13,16 @@ export function createEnemy(type: EnemyTypeId, id: string): Enemy {
     pathIndex: 0,
     value: enemyConfig.value,
     type,
-    statusEffects: []
+    statusEffects: [],
+    damage: enemyConfig.damage,
+    physicalResist: enemyConfig.physicalResist || 0,
+    magicResist: enemyConfig.magicResist || 0,
+    attacksTowers: enemyConfig.attacksTowers,
+    towerDamage: enemyConfig.towerDamage,
+    attackRange: enemyConfig.attackRange,
+    regeneration: enemyConfig.regeneration,
+    speedBoost: enemyConfig.speedBoost,
+    stealsGold: enemyConfig.stealsGold
   };
 }
 
@@ -63,6 +72,13 @@ export function updateEnemyStatusEffects(enemy: Enemy, currentTime: number, delt
     }
   }
 
+  // Apply speed boost for speedDemon (accelerates as HP drops)
+  if (enemy.speedBoost) {
+    const healthPercent = enemy.health / enemy.maxHealth;
+    const speedBoostMultiplier = 1 + (1 - healthPercent) * 1.5; // Up to 150% speed boost when near death
+    speedMultiplier *= speedBoostMultiplier;
+  }
+
   // Apply poison damage
   let healthLoss = 0;
   for (const effect of activeEffects) {
@@ -71,11 +87,17 @@ export function updateEnemyStatusEffects(enemy: Enemy, currentTime: number, delt
     }
   }
 
+  // Apply regeneration
+  let healthGain = 0;
+  if (enemy.regeneration) {
+    healthGain = enemy.maxHealth * enemy.regeneration * deltaTime;
+  }
+
   return {
     ...enemy,
     statusEffects: activeEffects,
     speed: enemy.baseSpeed * speedMultiplier,
-    health: Math.max(0, enemy.health - healthLoss)
+    health: Math.min(enemy.maxHealth, Math.max(0, enemy.health - healthLoss + healthGain))
   };
 }
 
@@ -153,6 +175,7 @@ export function createProjectile(
     damage: tower.damage,
     speed: 300, // pixels per second
     towerType: tower.type,
+    towerCategory: tower.category,
     specialEffect: tower.specialAbility
   };
 }
@@ -195,10 +218,20 @@ export function getWaveEnemies(wave: number): { type: EnemyTypeId; count: number
   return generateWave(wave);
 }
 
-export function damageEnemy(enemy: Enemy, damage: number): Enemy {
+export function damageEnemy(enemy: Enemy, damage: number, damageType?: 'physical' | 'magic' | 'hybrid'): Enemy {
+  let actualDamage = damage;
+
+  // Apply resistance based on damage type (hybrid bypasses resistance)
+  if (damageType === 'physical') {
+    actualDamage = damage * (1 - enemy.physicalResist);
+  } else if (damageType === 'magic') {
+    actualDamage = damage * (1 - enemy.magicResist);
+  }
+  // hybrid or undefined type ignores resistance
+
   return {
     ...enemy,
-    health: Math.max(0, enemy.health - damage)
+    health: Math.max(0, enemy.health - actualDamage)
   };
 }
 
@@ -226,12 +259,13 @@ export function applyAOEDamage(
   centerPosition: Position,
   radius: number,
   damage: number,
+  damageType: 'physical' | 'magic' | 'hybrid',
   effect?: StatusEffect
 ): Enemy[] {
   return enemies.map(enemy => {
     const distance = getDistance(enemy.position, centerPosition);
     if (distance <= radius) {
-      let updatedEnemy = damageEnemy(enemy, damage);
+      let updatedEnemy = damageEnemy(enemy, damage, damageType);
       if (effect) {
         updatedEnemy = applyStatusEffect(updatedEnemy, effect);
       }
@@ -246,16 +280,17 @@ export function applyChainLightning(
   initialTarget: Enemy,
   maxChains: number,
   damage: number,
-  maxRange: number
-): { enemyId: string; damage: number }[] {
-  const hits: { enemyId: string; damage: number }[] = [];
+  maxRange: number,
+  damageType: 'physical' | 'magic' | 'hybrid'
+): { enemyId: string; damage: number; damageType: 'physical' | 'magic' | 'hybrid' }[] {
+  const hits: { enemyId: string; damage: number; damageType: 'physical' | 'magic' | 'hybrid' }[] = [];
   const hitEnemies = new Set<string>();
 
   let currentTarget: Enemy | null = initialTarget;
   let currentDamage = damage;
 
   for (let i = 0; i < maxChains && currentTarget; i++) {
-    hits.push({ enemyId: currentTarget.id, damage: currentDamage });
+    hits.push({ enemyId: currentTarget.id, damage: currentDamage, damageType });
     hitEnemies.add(currentTarget.id);
 
     // Find next closest enemy

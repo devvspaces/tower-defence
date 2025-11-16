@@ -108,38 +108,88 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
       <div className="text-white space-y-6">
         <section>
           <h3 className="text-2xl font-bold text-red-400 mb-3">👾 Enemy Types</h3>
+
+          <h4 className="text-lg font-bold text-orange-300 mt-3 mb-2">Basic Enemies</h4>
           <div className="space-y-2 grid grid-cols-2 gap-2">
             <div className="bg-slate-800 p-2 rounded border-l-4 border-red-500">
               <h4 className="font-bold text-red-300 text-sm">👾 Void Walker</h4>
-              <p className="text-xs text-gray-300">HP: 50 | Speed: 1x | $25</p>
+              <p className="text-xs text-gray-300">HP: 50 | Spd: 1x | Dmg: 1 | $25</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-orange-500">
               <h4 className="font-bold text-orange-300 text-sm">⚡ Phase Shifter</h4>
-              <p className="text-xs text-gray-300">HP: 30 | Speed: 2x | $30</p>
+              <p className="text-xs text-gray-300">HP: 30 | Spd: 2x | Dmg: 1 | $30</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-purple-500">
               <h4 className="font-bold text-purple-300 text-sm">🛡️ Void Titan</h4>
-              <p className="text-xs text-gray-300">HP: 150 | Speed: 0.5x | $50</p>
+              <p className="text-xs text-gray-300">HP: 150 | Spd: 0.5x | Dmg: 2 | $50</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-green-500">
               <h4 className="font-bold text-green-300 text-sm">🦟 Swarm Drone</h4>
-              <p className="text-xs text-gray-300">HP: 20 | Speed: 1.5x | $15</p>
+              <p className="text-xs text-gray-300">HP: 20 | Spd: 1.5x | Dmg: 1 | $15</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-pink-500">
               <h4 className="font-bold text-pink-300 text-sm">👹 Void Champion</h4>
-              <p className="text-xs text-gray-300">HP: 200 | Speed: 0.8x | $75</p>
+              <p className="text-xs text-gray-300">HP: 200 | Spd: 0.8x | Dmg: 3 | $75</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-red-700">
               <h4 className="font-bold text-red-400 text-sm">💀 Corruption Lord</h4>
-              <p className="text-xs text-gray-300">HP: 500 | Speed: 0.3x | $150</p>
+              <p className="text-xs text-gray-300">HP: 500 | Spd: 0.3x | Dmg: 5 | $150</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-teal-500">
               <h4 className="font-bold text-teal-300 text-sm">🔮 Void Mender</h4>
-              <p className="text-xs text-gray-300">HP: 80 | Speed: 0.7x | $60</p>
+              <p className="text-xs text-gray-300">HP: 80 | Spd: 0.7x | Dmg: 1 | $60</p>
             </div>
             <div className="bg-slate-800 p-2 rounded border-l-4 border-purple-400">
               <h4 className="font-bold text-purple-400 text-sm">🦇 Sky Terror</h4>
-              <p className="text-xs text-gray-300">HP: 40 | Speed: 2.5x | $40</p>
+              <p className="text-xs text-gray-300">HP: 40 | Spd: 2.5x | Dmg: 1 | $40</p>
+            </div>
+          </div>
+
+          <h4 className="text-lg font-bold text-yellow-300 mt-4 mb-2">Resistant Enemies</h4>
+          <div className="space-y-2 grid grid-cols-2 gap-2">
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-gray-500">
+              <h4 className="font-bold text-gray-300 text-sm">🛡️ Armored Knight</h4>
+              <p className="text-xs text-gray-300">HP: 180 | Dmg: 2 | $80</p>
+              <p className="text-xs text-yellow-400">75% Physical Resist</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-purple-300">
+              <h4 className="font-bold text-purple-300 text-sm">👻 Ethereal Wraith</h4>
+              <p className="text-xs text-gray-300">HP: 120 | Dmg: 2 | $90</p>
+              <p className="text-xs text-yellow-400">100% Magic Immune</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-cyan-400">
+              <h4 className="font-bold text-cyan-300 text-sm">💎 Crystal Golem</h4>
+              <p className="text-xs text-gray-300">HP: 300 | Dmg: 3 | $120</p>
+              <p className="text-xs text-yellow-400">50% All Resist</p>
+            </div>
+          </div>
+
+          <h4 className="text-lg font-bold text-red-300 mt-4 mb-2">Special Enemies</h4>
+          <div className="space-y-2 grid grid-cols-2 gap-2">
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-orange-600">
+              <h4 className="font-bold text-orange-300 text-sm">🔨 Demolisher</h4>
+              <p className="text-xs text-gray-300">HP: 250 | Dmg: 4 | $100</p>
+              <p className="text-xs text-red-400">Attacks Towers!</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-green-400">
+              <h4 className="font-bold text-green-300 text-sm">🩸 Regenerator</h4>
+              <p className="text-xs text-gray-300">HP: 150 | Dmg: 2 | $85</p>
+              <p className="text-xs text-green-400">Heals 3% HP/sec</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-pink-400">
+              <h4 className="font-bold text-pink-300 text-sm">🌪️ Speed Demon</h4>
+              <p className="text-xs text-gray-300">HP: 100 | Dmg: 2 | $70</p>
+              <p className="text-xs text-pink-400">Speeds up as HP drops</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-yellow-400">
+              <h4 className="font-bold text-yellow-300 text-sm">💰 Gold Thief</h4>
+              <p className="text-xs text-gray-300">HP: 60 | Dmg: 1 | $0</p>
+              <p className="text-xs text-yellow-400">Steals $100 if reaches end!</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-red-900">
+              <h4 className="font-bold text-red-300 text-sm">🐉 Void Juggernaut</h4>
+              <p className="text-xs text-gray-300">HP: 800 | Dmg: 8 | $200</p>
+              <p className="text-xs text-red-400">40% All Resist, Devastating</p>
             </div>
           </div>
         </section>
@@ -192,6 +242,22 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
             <div className="bg-slate-800 p-2 rounded text-sm">
               <span className="font-bold text-green-200">☠️ Plague Spewer</span> - $180 | Dmg: 8 | Range: 120 | Rate: 0.7/s
               <p className="text-xs text-gray-400">Spreads bio-engineered corruption toxin (5 dmg/s for 4s)</p>
+            </div>
+          </div>
+
+          <h4 className="text-lg font-bold text-yellow-300 mt-4 mb-2">💡 Utility & Special</h4>
+          <div className="space-y-2">
+            <div className="bg-slate-800 p-2 rounded text-sm">
+              <span className="font-bold text-blue-200">📡 Damage Amplifier</span> - $250 | Range: 150
+              <p className="text-xs text-gray-400">Increases damage of nearby towers by 40%</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded text-sm">
+              <span className="font-bold text-yellow-200">💰 Resource Collector</span> - $300
+              <p className="text-xs text-gray-400">Generates $8 per second passively</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded text-sm">
+              <span className="font-bold text-purple-200">🌟 Dual Element Core</span> - $400 | Dmg: 25 | Range: 140 | Rate: 1/s
+              <p className="text-xs text-gray-400">Hybrid damage bypasses all resistances</p>
             </div>
           </div>
         </section>
