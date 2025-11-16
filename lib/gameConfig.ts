@@ -226,16 +226,69 @@ export const TOWER_TYPES: TowerType[] = [
   }
 ];
 
-export const ENEMY_PATH: Position[] = [
-  { x: 0, y: 200 },
-  { x: 200, y: 200 },
-  { x: 200, y: 400 },
-  { x: 400, y: 400 },
-  { x: 400, y: 100 },
-  { x: 600, y: 100 },
-  { x: 600, y: 300 },
-  { x: 800, y: 300 }
+// Predefined map paths
+export const MAP_PATHS: Position[][] = [
+  // Map 1: Classic zigzag
+  [
+    { x: 0, y: 200 },
+    { x: 200, y: 200 },
+    { x: 200, y: 400 },
+    { x: 400, y: 400 },
+    { x: 400, y: 100 },
+    { x: 600, y: 100 },
+    { x: 600, y: 300 },
+    { x: 800, y: 300 }
+  ],
+  // Map 2: Snake pattern
+  [
+    { x: 0, y: 500 },
+    { x: 300, y: 500 },
+    { x: 300, y: 200 },
+    { x: 600, y: 200 },
+    { x: 600, y: 500 },
+    { x: 800, y: 500 }
+  ],
+  // Map 3: Stairs
+  [
+    { x: 0, y: 450 },
+    { x: 200, y: 450 },
+    { x: 200, y: 350 },
+    { x: 400, y: 350 },
+    { x: 400, y: 250 },
+    { x: 600, y: 250 },
+    { x: 600, y: 150 },
+    { x: 800, y: 150 }
+  ],
+  // Map 4: Wide arc
+  [
+    { x: 0, y: 300 },
+    { x: 150, y: 450 },
+    { x: 350, y: 500 },
+    { x: 550, y: 450 },
+    { x: 700, y: 300 },
+    { x: 800, y: 300 }
+  ],
+  // Map 5: Tight zigzag
+  [
+    { x: 0, y: 150 },
+    { x: 150, y: 150 },
+    { x: 150, y: 400 },
+    { x: 350, y: 400 },
+    { x: 350, y: 200 },
+    { x: 550, y: 200 },
+    { x: 550, y: 450 },
+    { x: 800, y: 450 }
+  ]
 ];
+
+// Default path for compatibility
+export const ENEMY_PATH: Position[] = MAP_PATHS[0];
+
+// Get a random map path
+export function getRandomMapPath(): Position[] {
+  const randomIndex = Math.floor(Math.random() * MAP_PATHS.length);
+  return MAP_PATHS[randomIndex];
+}
 
 export const ENEMY_TYPES: Record<string, EnemyConfig> = {
   // BASIC ENEMIES

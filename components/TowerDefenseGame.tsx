@@ -14,7 +14,8 @@ import {
   GRID_SIZE,
   WAVE_DELAY,
   GAME_LORE,
-  LEADERBOARD_DATA
+  LEADERBOARD_DATA,
+  getRandomMapPath
 } from '@/lib/gameConfig';
 import {
   createEnemy,
@@ -101,44 +102,9 @@ const TowerDefenseGame: React.FC = () => {
     return false;
   };
 
-  // Generate random map path
-  const generateRandomPath = (): Position[] => {
-    const path: Position[] = [];
-    const segments = 5 + Math.floor(Math.random() * 3); // 5-7 segments
-
-    let x = 0;
-    let y = 100 + Math.floor(Math.random() * 400); // Random start Y
-    path.push({ x, y });
-
-    const segmentWidth = GAME_WIDTH / segments;
-
-    for (let i = 1; i <= segments; i++) {
-      const prevPoint = path[path.length - 1];
-
-      if (i === segments) {
-        // Last point - exit at right edge
-        x = GAME_WIDTH;
-        y = prevPoint.y;
-      } else {
-        x = i * segmentWidth + (Math.random() * 40 - 20);
-
-        // Alternate between moving up/down or staying similar height
-        if (Math.random() > 0.5) {
-          y = Math.max(80, Math.min(GAME_HEIGHT - 80, prevPoint.y + (Math.random() * 200 - 100)));
-        } else {
-          y = prevPoint.y;
-        }
-      }
-
-      path.push({ x, y });
-    }
-
-    return path;
-  };
-
   const startGame = () => {
     playSound('menuClick');
-    const newPath = generateRandomPath();
+    const newPath = getRandomMapPath();
     setScreen('playing');
     setGameState(prev => ({
       ...prev,
