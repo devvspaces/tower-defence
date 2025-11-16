@@ -1,5 +1,5 @@
-import { GameState, Enemy, Tower, Projectile, Position } from '@/types/game';
-import { ENEMY_PATH, ENEMY_TYPES, WAVE_CONFIG } from './gameConfig';
+import { GameState, Enemy, Tower, Projectile, Position, StatusEffect, TowerTypeId } from '@/types/game';
+import { ENEMY_PATH, ENEMY_TYPES, WAVE_CONFIG, TOWER_TYPES } from './gameConfig';
 
 export function createEnemy(type: 'basic' | 'fast' | 'tank', id: string): Enemy {
   const enemyConfig = ENEMY_TYPES[type];
@@ -9,20 +9,17 @@ export function createEnemy(type: 'basic' | 'fast' | 'tank', id: string): Enemy 
     health: enemyConfig.health,
     maxHealth: enemyConfig.health,
     speed: enemyConfig.speed,
+    baseSpeed: enemyConfig.speed,
     pathIndex: 0,
     value: enemyConfig.value,
-    type
+    type,
+    statusEffects: []
   };
 }
 
-export function createTower(type: Tower['type'], position: Position, id: string, cost: number): Tower {
-  const configs = {
-    basic: { range: 120, damage: 10, fireRate: 1 },
-    sniper: { range: 200, damage: 30, fireRate: 0.5 },
-    cannon: { range: 100, damage: 20, fireRate: 1.5 }
-  };
-
-  const config = configs[type];
+export function createTower(type: TowerTypeId, position: Position, id: string): Tower {
+  const config = TOWER_TYPES.find(t => t.type === type);
+  if (!config) throw new Error(`Tower type ${type} not found`);
 
   return {
     id,
@@ -31,9 +28,11 @@ export function createTower(type: Tower['type'], position: Position, id: string,
     damage: config.damage,
     fireRate: config.fireRate,
     lastFireTime: 0,
-    cost,
-    type,
-    target: null
+    cost: config.cost,
+    type: config.type,
+    category: config.category,
+    target: null,
+    specialAbility: config.specialAbility
   };
 }
 
@@ -43,9 +42,46 @@ export function getDistance(pos1: Position, pos2: Position): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+export function updateEnemyStatusEffects(enemy: Enemy, currentTime: number, deltaTime: number): Enemy {
+  // Remove expired effects
+  const activeEffects = enemy.statusEffects.filter(effect => {
+    const elapsed = (currentTime - effect.appliedAt) / 1000;
+    return elapsed < effect.duration;
+  });
+
+  // Calculate current speed based on effects
+  let speedMultiplier = 1;
+  let isFrozen = false;
+
+  for (const effect of activeEffects) {
+    if (effect.type === 'freeze') {
+      isFrozen = true;
+      speedMultiplier = 0;
+      break;
+    } else if (effect.type === 'slow') {
+      speedMultiplier = Math.min(speedMultiplier, effect.strength);
+    }
+  }
+
+  // Apply poison damage
+  let healthLoss = 0;
+  for (const effect of activeEffects) {
+    if (effect.type === 'poison') {
+      healthLoss += effect.strength * deltaTime;
+    }
+  }
+
+  return {
+    ...enemy,
+    statusEffects: activeEffects,
+    speed: enemy.baseSpeed * speedMultiplier,
+    health: Math.max(0, enemy.health - healthLoss)
+  };
+}
+
 export function moveEnemyAlongPath(enemy: Enemy, deltaTime: number, path: Position[]): Enemy {
-  if (enemy.pathIndex >= path.length - 1) {
-    return enemy; // Reached the end
+  if (enemy.pathIndex >= path.length - 1 || enemy.speed === 0) {
+    return enemy; // Reached the end or frozen
   }
 
   const currentTarget = path[enemy.pathIndex + 1];
@@ -115,7 +151,9 @@ export function createProjectile(
     position: { ...tower.position },
     targetId: targetEnemy.id,
     damage: tower.damage,
-    speed: 300 // pixels per second
+    speed: 300, // pixels per second
+    towerType: tower.type,
+    specialEffect: tower.specialAbility
   };
 }
 
@@ -160,6 +198,83 @@ export function damageEnemy(enemy: Enemy, damage: number): Enemy {
     ...enemy,
     health: Math.max(0, enemy.health - damage)
   };
+}
+
+export function applyStatusEffect(enemy: Enemy, effect: StatusEffect): Enemy {
+  // Check if effect already exists, if so, refresh it
+  const existingEffectIndex = enemy.statusEffects.findIndex(e => e.type === effect.type);
+
+  if (existingEffectIndex >= 0) {
+    const newEffects = [...enemy.statusEffects];
+    newEffects[existingEffectIndex] = effect; // Refresh the effect
+    return {
+      ...enemy,
+      statusEffects: newEffects
+    };
+  } else {
+    return {
+      ...enemy,
+      statusEffects: [...enemy.statusEffects, effect]
+    };
+  }
+}
+
+export function applyAOEDamage(
+  enemies: Enemy[],
+  centerPosition: Position,
+  radius: number,
+  damage: number,
+  effect?: StatusEffect
+): Enemy[] {
+  return enemies.map(enemy => {
+    const distance = getDistance(enemy.position, centerPosition);
+    if (distance <= radius) {
+      let updatedEnemy = damageEnemy(enemy, damage);
+      if (effect) {
+        updatedEnemy = applyStatusEffect(updatedEnemy, effect);
+      }
+      return updatedEnemy;
+    }
+    return enemy;
+  });
+}
+
+export function applyChainLightning(
+  enemies: Enemy[],
+  initialTarget: Enemy,
+  maxChains: number,
+  damage: number,
+  maxRange: number
+): { enemyId: string; damage: number }[] {
+  const hits: { enemyId: string; damage: number }[] = [];
+  const hitEnemies = new Set<string>();
+
+  let currentTarget: Enemy | null = initialTarget;
+  let currentDamage = damage;
+
+  for (let i = 0; i < maxChains && currentTarget; i++) {
+    hits.push({ enemyId: currentTarget.id, damage: currentDamage });
+    hitEnemies.add(currentTarget.id);
+
+    // Find next closest enemy
+    let closestEnemy: Enemy | null = null;
+    let closestDistance = Infinity;
+
+    for (const enemy of enemies) {
+      if (!hitEnemies.has(enemy.id)) {
+        const distance = getDistance(currentTarget.position, enemy.position);
+        if (distance < closestDistance && distance <= maxRange) {
+          closestDistance = distance;
+          closestEnemy = enemy;
+        }
+      }
+    }
+
+    currentTarget = closestEnemy;
+    currentDamage *= 0.7; // Each chain does 70% of previous damage
+  }
+
+  return hits;
 }
 
 export function isEnemyDead(enemy: Enemy): boolean {
