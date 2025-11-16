@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tower Defence Game - Monorepo
+
+A blockchain-based tower defense game with Web3 authentication and real-time multiplayer chat.
+
+## Project Structure
+
+```
+tower-defence/
+├── frontend/          # Next.js frontend application
+│   ├── app/          # Next.js app directory
+│   ├── components/   # React components
+│   ├── lib/          # Game logic and utilities
+│   └── types/        # TypeScript type definitions
+│
+└── backend/          # NestJS backend API
+    ├── src/
+    │   ├── modules/
+    │   │   ├── auth/        # SIWE authentication
+    │   │   └── game/        # Game recording & leaderboard
+    │   └── shared/
+    │       └── database/    # Drizzle ORM schema
+    └── drizzle/            # Database migrations
+```
+
+## Tech Stack
+
+### Frontend
+- **Next.js 16** - React framework
+- **Wagmi + RainbowKit** - Web3 wallet connection
+- **SIWE** - Sign-In with Ethereum
+- **Socket.io** - Real-time chat
+
+### Backend
+- **NestJS** - Node.js framework
+- **Drizzle ORM** - Type-safe PostgreSQL ORM
+- **JWT** - Stateless authentication
+- **Socket.io** - WebSocket server
+- **Hexagonal Architecture** - Clean architecture pattern
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- npm or yarn
 
+### Installation
+
+1. **Install dependencies:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Setup database:**
+```bash
+# Create PostgreSQL database
+createdb tower_defence
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Configure environment variables
+cp backend/.env.example backend/.env
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run migrations
+cd backend
+npm run db:push
+```
 
-## Learn More
+3. **Run development servers:**
+```bash
+# Terminal 1 - Frontend
+cd frontend
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Terminal 2 - Backend
+cd backend
+npm run start:dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 🎮 Tower defense gameplay with 5 unique maps
+- 🔐 Web3 authentication via Sign-In with Ethereum (SIWE)
+- 💬 Real-time global chat
+- 🏆 Global leaderboard
+- 👤 User profiles with customizable usernames
+- 📊 Game replay system with full state recording
+- 🎯 Drag & drop tower placement
+- 💰 Tower selling/refund mechanism
 
-## Deploy on Vercel
+## Development Status
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [x] Core game mechanics
+- [x] Monorepo structure
+- [ ] Backend API implementation
+- [ ] Web3 authentication
+- [ ] Real-time chat
+- [ ] Game recording
+- [ ] Frontend integration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
