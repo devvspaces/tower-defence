@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #ededed;
+  --background: #000000;
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -11,7 +11,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #000000;
   color: var(--foreground);
   font-family: 'Courier New', Courier, monospace;
 }
@@ -57,31 +57,70 @@ body {
   filter: grayscale(0.8);
 }
 
-/* Retro Background */
-.retro-bg {
+/* Space Background */
+.space-bg {
   background:
-    radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
-    linear-gradient(to bottom, #0a0a0f, #0f1729, #0a0a0f);
-  background-size: 100% 100%;
+    radial-gradient(ellipse at top, rgba(0, 100, 150, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(0, 50, 100, 0.1) 0%, transparent 50%),
+    radial-gradient(2px 2px at 20% 30%, white, transparent),
+    radial-gradient(2px 2px at 60% 70%, white, transparent),
+    radial-gradient(1px 1px at 50% 50%, white, transparent),
+    radial-gradient(1px 1px at 80% 10%, white, transparent),
+    radial-gradient(2px 2px at 90% 60%, white, transparent),
+    radial-gradient(1px 1px at 30% 80%, white, transparent),
+    #000000;
+  background-size:
+    100% 100%,
+    100% 100%,
+    200% 200%,
+    200% 200%,
+    300% 300%,
+    250% 250%,
+    280% 280%,
+    220% 220%,
+    100% 100%;
+  background-position:
+    center,
+    center,
+    0% 0%,
+    40% 60%,
+    20% 80%,
+    60% 20%,
+    10% 40%,
+    70% 90%,
+    center;
+}
+
+/* Loading text scroll animation */
+@keyframes scrollUp {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.loading-text-scroll {
+  animation: scrollUp 20s linear infinite;
 }
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: #1a1a1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #06b6d4;
-  border-radius: 5px;
+  background: #00bcd4;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0891b2;
+  background: #00e5ff;
 }
 
 /* Scanline Effect */

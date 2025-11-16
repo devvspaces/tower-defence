@@ -44,6 +44,9 @@ const TowerDefenseGame: React.FC = () => {
   const [screen, setScreen] = useState<GameScreen>('menu');
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
     money: STARTING_MONEY,
     lives: STARTING_LIVES,
@@ -56,7 +59,7 @@ const TowerDefenseGame: React.FC = () => {
     gameStatus: 'waiting',
     selectedTowerType: null,
     nukeCharges: STARTING_NUKES,
-    waveStartTime: Date.now() + 15000,
+    waveStartTime: Date.now() + 5000,
     gameStartTime: null
   });
 
@@ -71,6 +74,23 @@ const TowerDefenseGame: React.FC = () => {
 
   const { playSound, muted, setMuted } = useSound();
 
+  // Loading screen effect
+  useEffect(() => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 500);
+        clearInterval(interval);
+      } else {
+        setLoadingProgress(progress);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
+
   const throttleSound = (soundType: string, minInterval: number = 100) => {
     const now = Date.now();
     const lastTime = lastSoundTime.current[soundType] || 0;
@@ -81,13 +101,58 @@ const TowerDefenseGame: React.FC = () => {
     return false;
   };
 
+  // Generate random map path
+  const generateRandomPath = (): Position[] => {
+    const path: Position[] = [];
+    const segments = 5 + Math.floor(Math.random() * 3); // 5-7 segments
+
+    let x = 0;
+    let y = 100 + Math.floor(Math.random() * 400); // Random start Y
+    path.push({ x, y });
+
+    const segmentWidth = GAME_WIDTH / segments;
+
+    for (let i = 1; i <= segments; i++) {
+      const prevPoint = path[path.length - 1];
+
+      if (i === segments) {
+        // Last point - exit at right edge
+        x = GAME_WIDTH;
+        y = prevPoint.y;
+      } else {
+        x = i * segmentWidth + (Math.random() * 40 - 20);
+
+        // Alternate between moving up/down or staying similar height
+        if (Math.random() > 0.5) {
+          y = Math.max(80, Math.min(GAME_HEIGHT - 80, prevPoint.y + (Math.random() * 200 - 100)));
+        } else {
+          y = prevPoint.y;
+        }
+      }
+
+      path.push({ x, y });
+    }
+
+    return path;
+  };
+
   const startGame = () => {
     playSound('menuClick');
+    const newPath = generateRandomPath();
     setScreen('playing');
     setGameState(prev => ({
       ...prev,
+      path: newPath,
+      enemies: [],
+      towers: [],
+      projectiles: [],
+      money: STARTING_MONEY,
+      lives: STARTING_LIVES,
+      wave: 0,
+      score: 0,
+      nukeCharges: STARTING_NUKES,
       gameStatus: 'waiting',
-      waveStartTime: Date.now() + 15000
+      waveStartTime: Date.now() + 5000
     }));
   };
 
@@ -360,8 +425,8 @@ const TowerDefenseGame: React.FC = () => {
         });
 
         newState.enemies = newState.enemies.filter(enemy => !isEnemyDead(enemy));
-        newState.money += moneyGained;
-        newState.score += scoreGained;
+        newState.money = Math.round((newState.money + moneyGained) * 100) / 100;
+        newState.score += Math.round(scoreGained);
 
         // Check game over
         if (newState.lives <= 0 && prevState.lives > 0) {
@@ -424,12 +489,12 @@ const TowerDefenseGame: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas with dark background
-    ctx.fillStyle = '#0a0a0f';
+    // Clear canvas with black background
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Draw grid
-    ctx.strokeStyle = '#1a1a2e';
+    // Draw subtle grid
+    ctx.strokeStyle = '#0a0a0a';
     ctx.lineWidth = 1;
     for (let x = 0; x <= GAME_WIDTH; x += GRID_SIZE) {
       ctx.beginPath();
@@ -445,7 +510,7 @@ const TowerDefenseGame: React.FC = () => {
     }
 
     // Draw path
-    ctx.strokeStyle = '#2a2a4e';
+    ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 40;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -461,15 +526,15 @@ const TowerDefenseGame: React.FC = () => {
 
     // Draw towers with range
     gameState.towers.forEach(tower => {
-      if (gameState.selectedTowerType) {
-        ctx.fillStyle = tower.category === 'physical'
-          ? 'rgba(239, 68, 68, 0.1)'
-          : tower.category === 'magic'
-          ? 'rgba(147, 51, 234, 0.1)'
-          : 'rgba(59, 130, 246, 0.1)';
+      // Show range if tower is selected
+      if (selectedTower?.id === tower.id) {
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(tower.position.x, tower.position.y, tower.range, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
       }
 
       // Get tower config for icon
@@ -483,11 +548,34 @@ const TowerDefenseGame: React.FC = () => {
       ctx.fillText(icon, tower.position.x, tower.position.y);
 
       // Draw border around tower
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = selectedTower?.id === tower.id ? '#00ffff' : '#888';
+      ctx.lineWidth = selectedTower?.id === tower.id ? 3 : 2;
       ctx.beginPath();
       ctx.arc(tower.position.x, tower.position.y, 18, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Draw health bar for towers with health
+      if (tower.health !== undefined && tower.maxHealth !== undefined) {
+        const healthBarWidth = 32;
+        const healthBarHeight = 4;
+        const healthPercentage = tower.health / tower.maxHealth;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(
+          tower.position.x - healthBarWidth / 2,
+          tower.position.y + 24,
+          healthBarWidth,
+          healthBarHeight
+        );
+
+        ctx.fillStyle = healthPercentage > 0.5 ? '#00ff00' : healthPercentage > 0.25 ? '#ffaa00' : '#ff0000';
+        ctx.fillRect(
+          tower.position.x - healthBarWidth / 2,
+          tower.position.y + 24,
+          healthBarWidth * healthPercentage,
+          healthBarHeight
+        );
+      }
     });
 
     // Draw enemies with effects
@@ -540,41 +628,57 @@ const TowerDefenseGame: React.FC = () => {
     // Draw projectiles
     gameState.projectiles.forEach(projectile => {
       const projectileColors: Record<string, string> = {
-        basic: '#fbbf24',
-        sniper: '#fcd34d',
-        cannon: '#fb923c',
-        fireMage: '#c084fc',
-        lightning: '#a78bfa',
-        arcane: '#818cf8',
-        iceTower: '#38bdf8',
-        slow: '#22d3ee',
-        poison: '#34d399'
+        basic: '#00ffff',
+        sniper: '#00ffff',
+        cannon: '#00ffff',
+        fireMage: '#ff00ff',
+        lightning: '#00ffff',
+        arcane: '#ff00ff',
+        iceTower: '#00ffff',
+        slow: '#00ffff',
+        poison: '#00ff00',
+        hybrid: '#00ffff'
       };
 
-      ctx.fillStyle = projectileColors[projectile.towerType] || '#fbbf24';
+      ctx.fillStyle = projectileColors[projectile.towerType] || '#00ffff';
       ctx.beginPath();
       ctx.arc(projectile.position.x, projectile.position.y, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      if (['fireMage', 'lightning', 'arcane'].includes(projectile.towerType)) {
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        ctx.arc(projectile.position.x, projectile.position.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
+      // Add glow effect for all projectiles
+      ctx.shadowColor = projectileColors[projectile.towerType] || '#00ffff';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(projectile.position.x, projectile.position.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
     });
   }, [gameState, screen]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!gameState.selectedTowerType || gameState.gameStatus !== 'playing') return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
+    // Check if clicking on an existing tower to select it
+    const clickedTower = gameState.towers.find(tower => {
+      const dist = getDistance({ x, y }, tower.position);
+      return dist < 20;
+    });
+
+    if (clickedTower) {
+      setSelectedTower(clickedTower);
+      return;
+    }
+
+    // Deselect tower if clicking elsewhere
+    setSelectedTower(null);
+
+    // Place tower if one is selected for placement
+    if (!gameState.selectedTowerType || gameState.gameStatus !== 'playing') return;
 
     const towerTypeConfig = TOWER_TYPES.find(t => t.type === gameState.selectedTowerType);
     if (!towerTypeConfig) return;
@@ -663,19 +767,72 @@ const TowerDefenseGame: React.FC = () => {
 
   const timeUntilWave = getTimeUntilWave();
 
+  // LOADING SCREEN
+  if (loading) {
+    const loadingTexts = [
+      'Initializing Defense Systems...',
+      'Loading Tower Configurations...',
+      'Scanning Enemy Databases...',
+      'Calibrating Weapons Arrays...',
+      'Establishing Perimeter...',
+      'Loading Citadel Systems...',
+      'Syncing Temporal Shields...',
+      'Preparing Battle Grid...',
+      'Charging Energy Cores...',
+      'Activating Guardian Protocol...'
+    ];
+
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+        {/* Scrolling background text */}
+        <div className="absolute inset-0 overflow-hidden opacity-10">
+          <div className="loading-text-scroll text-cyan-500 font-mono text-xs leading-relaxed whitespace-pre">
+            {Array(50).fill(loadingTexts).flat().map((text, i) => (
+              <div key={i}>{text}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="relative z-10 text-center">
+          <h1 className="text-6xl font-bold mb-8 text-cyan-400" style={{
+            textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+          }}>
+            CHRONICLES OF THE
+            <br />
+            ETERNAL CITADEL
+          </h1>
+
+          {/* Progress bar */}
+          <div className="w-96 h-4 bg-gray-800 border-2 border-cyan-500 rounded-full overflow-hidden mx-auto">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <div className="mt-4 text-cyan-400 font-mono">
+            Loading... {Math.floor(loadingProgress)}%
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // MENU SCREEN
   if (screen === 'menu') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center p-4 retro-bg">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 space-bg">
         <div className="text-center max-w-4xl">
-          <h1 className="text-6xl font-bold mb-4 retro-text text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 animate-pulse">
+          <h1 className="text-6xl font-bold mb-4 text-cyan-400" style={{
+            textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+          }}>
             {GAME_LORE.title}
           </h1>
-          <div className="bg-slate-900 bg-opacity-80 border-4 border-cyan-500 rounded-lg p-8 mb-8 retro-box">
+          <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
             <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
               {GAME_LORE.intro}
             </p>
-            <p className="text-cyan-200 text-sm leading-relaxed">
+            <p className="text-gray-400 text-sm leading-relaxed">
               {GAME_LORE.story}
             </p>
           </div>
@@ -683,7 +840,7 @@ const TowerDefenseGame: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <button
               onClick={startGame}
-              className="retro-button bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-cyan-400 text-2xl transition-all hover:scale-105"
+              className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
             >
               START MISSION
             </button>
@@ -692,7 +849,7 @@ const TowerDefenseGame: React.FC = () => {
                 playSound('menuClick');
                 setShowInfo(true);
               }}
-              className="retro-button bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-purple-400 text-2xl transition-all hover:scale-105"
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
             >
               INTEL DATABASE
             </button>
@@ -701,7 +858,7 @@ const TowerDefenseGame: React.FC = () => {
                 playSound('menuClick');
                 setShowHelp(true);
               }}
-              className="retro-button bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-green-400 text-2xl transition-all hover:scale-105"
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
             >
               TRAINING
             </button>
@@ -710,7 +867,7 @@ const TowerDefenseGame: React.FC = () => {
                 playSound('menuClick');
                 setMuted(!muted);
               }}
-              className="retro-button bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-orange-400 text-2xl transition-all hover:scale-105"
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
             >
               SOUND: {muted ? 'OFF' : 'ON'}
             </button>
@@ -729,26 +886,26 @@ const TowerDefenseGame: React.FC = () => {
 
   // GAME SCREEN
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 p-4 retro-bg">
+    <div className="min-h-screen bg-black p-4 space-bg">
       <div className="flex gap-4 max-w-[1600px] mx-auto">
         {/* LEFT PANEL - LEADERBOARD */}
         <div className="w-64 flex-shrink-0">
-          <div className="bg-slate-900 bg-opacity-90 border-4 border-yellow-500 rounded-lg p-4 retro-box">
-            <h2 className="text-2xl font-bold text-yellow-400 mb-4 text-center retro-text">TOP DEFENDERS</h2>
+          <div className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4">
+            <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">TOP DEFENDERS</h2>
             <div className="space-y-2 max-h-[700px] overflow-y-auto">
               {LEADERBOARD_DATA.map((entry) => (
                 <div
                   key={entry.rank}
                   className={`p-2 rounded ${
-                    entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-900 to-orange-900 border-2 border-yellow-500' : 'bg-slate-800'
+                    entry.rank <= 3 ? 'bg-cyan-900 bg-opacity-30 border border-cyan-500' : 'bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-yellow-400 font-bold">#{entry.rank}</span>
-                    <span className="text-xs text-cyan-400">W{entry.wave}</span>
+                    <span className="text-cyan-400 font-bold">#{entry.rank}</span>
+                    <span className="text-xs text-gray-400">W{entry.wave}</span>
                   </div>
                   <div className="text-white text-sm font-semibold truncate">{entry.name}</div>
-                  <div className="text-green-400 text-xs">{entry.score.toLocaleString()}</div>
+                  <div className="text-cyan-400 text-xs">{entry.score.toLocaleString()}</div>
                 </div>
               ))}
             </div>
@@ -757,26 +914,27 @@ const TowerDefenseGame: React.FC = () => {
 
         {/* CENTER - GAME */}
         <div className="flex-grow flex flex-col items-center">
-          <div className="mb-3 flex gap-2 items-center flex-wrap justify-center">
-            <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
-              ${gameState.money}
+          {/* Fixed height action bar */}
+          <div className="mb-3 min-h-[60px] flex gap-2 items-center flex-wrap justify-center">
+            <div className="bg-cyan-600 text-black px-4 py-2 rounded-lg font-bold">
+              ${Math.floor(gameState.money)}
             </div>
-            <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-cyan-500">
               ❤️ {gameState.lives}
             </div>
-            <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+            <div className="bg-gray-800 text-cyan-400 px-4 py-2 rounded-lg font-bold border border-cyan-500">
               Wave {gameState.wave}
             </div>
-            <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-cyan-500">
               {gameState.score}
             </div>
             <button
               onClick={useNuke}
               disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing'}
-              className={`px-4 py-2 rounded-lg font-bold retro-button transition-all ${
+              className={`px-4 py-2 rounded-lg font-bold transition-all ${
                 gameState.nukeCharges > 0 && gameState.enemies.length > 0 && gameState.gameStatus === 'playing'
-                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:scale-105 border-2 border-orange-400'
-                  : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
+                  ? 'bg-cyan-600 text-black hover:bg-cyan-500 border border-cyan-400'
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50 border border-gray-600'
               }`}
             >
               💣 NUKE ({gameState.nukeCharges})
@@ -786,7 +944,7 @@ const TowerDefenseGame: React.FC = () => {
                 playSound('menuClick');
                 setShowHelp(true);
               }}
-              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:scale-105 border-2 border-green-400"
+              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
             >
               ?
             </button>
@@ -795,7 +953,7 @@ const TowerDefenseGame: React.FC = () => {
                 playSound('menuClick');
                 setShowInfo(true);
               }}
-              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-105 border-2 border-purple-400"
+              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
             >
               INFO
             </button>
@@ -806,15 +964,15 @@ const TowerDefenseGame: React.FC = () => {
                   setScreen('menu');
                 }
               }}
-              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-red-600 to-red-700 text-white hover:scale-105 border-2 border-red-400"
+              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
             >
               QUIT
             </button>
           </div>
 
-          {timeUntilWave && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
-            <div className="mb-3 flex gap-3 items-center">
-              <div className="text-xl font-bold text-cyan-400 bg-slate-900 px-6 py-2 rounded-lg border-2 border-cyan-500 retro-box">
+          {timeUntilWave !== null && timeUntilWave > 0 && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
+            <div className="mb-3 flex gap-3 items-center min-h-[48px]">
+              <div className="text-xl font-bold text-cyan-400 bg-gray-900 px-6 py-2 rounded-lg border border-cyan-500">
                 Next wave in {timeUntilWave}s
               </div>
               <button
@@ -823,31 +981,34 @@ const TowerDefenseGame: React.FC = () => {
                   setGameState(prev => ({ ...prev, waveStartTime: null }));
                   startNextWave();
                 }}
-                className="px-6 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:scale-105 border-2 border-green-400 animate-pulse"
+                className="px-6 py-2 rounded-lg font-bold bg-cyan-600 text-black hover:bg-cyan-500 border border-cyan-400 animate-pulse"
               >
                 START WAVE NOW
               </button>
             </div>
+          )}
+          {(!timeUntilWave || timeUntilWave <= 0 || waveInProgress || gameState.gameStatus === 'gameOver') && (
+            <div className="mb-3 min-h-[48px]"></div>
           )}
 
           <canvas
             ref={canvasRef}
             width={GAME_WIDTH}
             height={GAME_HEIGHT}
-            className="border-4 border-cyan-500 retro-box shadow-2xl"
+            className="border-2 border-cyan-500 shadow-2xl"
             onClick={handleCanvasClick}
           />
 
           {gameState.gameStatus === 'gameOver' && (
-            <div className="mt-4 text-3xl font-bold bg-slate-900 px-8 py-4 rounded-lg border-4 border-red-500 retro-box animate-pulse">
-              <div className="text-red-400">CITADEL BREACHED</div>
-              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score} | Waves Survived: {gameState.wave}</div>
+            <div className="mt-4 text-3xl font-bold bg-gray-900 px-8 py-4 rounded-lg border border-cyan-500 animate-pulse">
+              <div className="text-cyan-400">CITADEL BREACHED</div>
+              <div className="text-gray-400 text-xl mt-2">Final Score: {gameState.score} | Waves Survived: {gameState.wave}</div>
               <button
                 onClick={() => {
                   playSound('menuClick');
                   setScreen('menu');
                 }}
-                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-lg retro-button"
+                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-black rounded-lg text-lg font-bold"
               >
                 Return to Menu
               </button>
@@ -857,8 +1018,8 @@ const TowerDefenseGame: React.FC = () => {
 
         {/* RIGHT PANEL - TOWERS */}
         <div className="w-80 flex-shrink-0">
-          <div className="bg-slate-900 bg-opacity-90 border-4 border-cyan-500 rounded-lg p-4 retro-box max-h-[800px] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4 text-center retro-text">DEFENSE SYSTEMS</h2>
+          <div className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4 max-h-[800px] overflow-y-auto">
+            <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
               {['all', 'physical', 'magic', 'support', 'utility', 'economic', 'hybrid'].map(cat => (
@@ -868,10 +1029,10 @@ const TowerDefenseGame: React.FC = () => {
                     playSound('menuClick');
                     setSelectedCategory(cat as any);
                   }}
-                  className={`px-3 py-1 rounded-lg font-semibold text-xs retro-button transition-all ${
+                  className={`px-3 py-1 rounded-lg font-semibold text-xs transition-all ${
                     selectedCategory === cat
-                      ? 'bg-cyan-600 text-white border-2 border-cyan-400'
-                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                      ? 'bg-cyan-600 text-black border border-cyan-400'
+                      : 'bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700'
                   }`}
                 >
                   {cat === 'all' ? 'ALL'
@@ -891,17 +1052,17 @@ const TowerDefenseGame: React.FC = () => {
                   key={tower.type}
                   onClick={() => selectTower(tower.type)}
                   disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
-                  className={`w-full p-3 rounded-lg text-left transition-all retro-button ${
+                  className={`w-full p-3 rounded-lg text-left transition-all ${
                     gameState.selectedTowerType === tower.type
-                      ? 'bg-cyan-600 text-white border-2 border-cyan-400 scale-105'
-                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                      ? 'bg-cyan-600 text-black border border-cyan-400'
+                      : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
                   } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{tower.icon}</span>
                     <div className="flex-1">
                       <div className="font-bold text-sm">{tower.name}</div>
-                      <div className="text-xs text-yellow-300 font-bold">${tower.cost}</div>
+                      <div className="text-xs text-cyan-400 font-bold">${tower.cost}</div>
                     </div>
                   </div>
                   <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
