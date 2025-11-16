@@ -6,44 +6,51 @@ export const GRID_SIZE = 40;
 export const STARTING_MONEY = 600;
 export const STARTING_LIVES = 20;
 export const STARTING_NUKES = 3;
-export const WAVE_DELAY = 15000; // 15 seconds between waves
-export const INITIAL_GAME_START_DELAY = 15000; // 15 seconds before first wave
+export const WAVE_DELAY = 15000;
+export const INITIAL_GAME_START_DELAY = 15000;
+
+// GAME LORE
+export const GAME_LORE = {
+  title: "Chronicles of the Eternal Citadel",
+  intro: "In the year 2847, humanity's last bastion stands against the Void Corruption. You are the Guardian Commander, tasked with defending the Eternal Citadel from waves of corrupted entities seeking to breach our reality.",
+  story: "The ancient prophecy spoke of the Great Convergence, when the barriers between dimensions would weaken. Now, the prophecy unfolds. Command the legendary defense systems of old and new, combining arcane magic with advanced technology to repel the endless hordes."
+};
 
 export const TOWER_TYPES: TowerType[] = [
   // PHYSICAL ATTACK TOWERS
   {
     type: 'basic',
     category: 'physical',
-    name: 'Archer Tower',
+    name: 'Sentinel Crossbow',
     cost: 100,
     range: 120,
     damage: 10,
     fireRate: 1,
-    description: 'Basic physical damage tower'
+    description: 'Ancient automated defense, precise and reliable'
   },
   {
     type: 'sniper',
     category: 'physical',
-    name: 'Sniper Tower',
+    name: 'Void Piercer',
     cost: 200,
     range: 220,
     damage: 35,
     fireRate: 0.5,
-    description: 'Long range, high damage, slow fire rate'
+    description: 'Experimental railgun that tears through dimensional fabric'
   },
   {
     type: 'cannon',
     category: 'physical',
-    name: 'Cannon',
+    name: 'Thunder Howitzer',
     cost: 180,
     range: 100,
     damage: 25,
     fireRate: 1.5,
-    description: 'Short range artillery with splash damage',
+    description: 'Explosive artillery creating shockwaves of destruction',
     specialAbility: {
       type: 'aoe',
-      value: 50, // AOE radius
-      description: 'Deals splash damage in 50px radius'
+      value: 50,
+      description: 'Shockwave damages all nearby entities'
     }
   },
 
@@ -51,93 +58,92 @@ export const TOWER_TYPES: TowerType[] = [
   {
     type: 'fireMage',
     category: 'magic',
-    name: 'Fire Mage',
+    name: 'Inferno Conduit',
     cost: 250,
     range: 140,
     damage: 20,
     fireRate: 0.8,
-    description: 'Launches fireballs with area damage',
+    description: 'Channels pure flame from the elemental plane',
     specialAbility: {
       type: 'aoe',
       value: 60,
-      description: 'Burns enemies in 60px radius'
+      description: 'Immolates everything in blast radius'
     }
   },
   {
     type: 'lightning',
     category: 'magic',
-    name: 'Lightning Tower',
+    name: 'Storm Caller',
     cost: 300,
     range: 160,
     damage: 15,
     fireRate: 1.2,
-    description: 'Chain lightning hits multiple enemies',
+    description: 'Summons chain lightning from the tempest realm',
     specialAbility: {
       type: 'chain',
-      value: 3, // Number of chains
-      description: 'Chains to 3 additional enemies'
+      value: 3,
+      description: 'Lightning arcs between corrupted souls'
     }
   },
   {
     type: 'arcane',
     category: 'magic',
-    name: 'Arcane Tower',
+    name: 'Aether Spire',
     cost: 350,
     range: 150,
     damage: 40,
     fireRate: 0.6,
-    description: 'Pure magic damage, ignores armor',
+    description: 'Harnesses raw reality-bending energy',
   },
 
   // SUPPORT/MAGIC DEFENSE TOWERS
   {
     type: 'iceTower',
     category: 'support',
-    name: 'Ice Tower',
+    name: 'Cryo Stasis Matrix',
     cost: 200,
     range: 130,
     damage: 5,
     fireRate: 1,
-    description: 'Freezes enemies, stopping them briefly',
+    description: 'Freezes enemies in temporal suspension',
     specialAbility: {
       type: 'freeze',
-      value: 2, // Freeze duration in seconds
-      description: 'Freezes enemies for 2 seconds'
+      value: 2,
+      description: 'Locks entities in frozen time'
     }
   },
   {
     type: 'slow',
     category: 'support',
-    name: 'Slow Tower',
+    name: 'Gravity Well',
     cost: 150,
     range: 150,
     damage: 3,
     fireRate: 1.5,
-    description: 'Slows enemy movement speed',
+    description: 'Warps spacetime to slow enemy movement',
     specialAbility: {
       type: 'slow',
-      value: 0.5, // 50% speed reduction
-      description: 'Reduces speed by 50% for 3s'
+      value: 0.5,
+      description: 'Gravitational field reduces speed by 50%'
     }
   },
   {
     type: 'poison',
     category: 'support',
-    name: 'Poison Tower',
+    name: 'Plague Spewer',
     cost: 180,
     range: 120,
     damage: 8,
     fireRate: 0.7,
-    description: 'Applies poison damage over time',
+    description: 'Spreads bio-engineered corruption toxin',
     specialAbility: {
       type: 'poison',
-      value: 5, // Damage per second
-      description: 'Deals 5 poison damage/sec for 4s'
+      value: 5,
+      description: 'Toxin eats away at dimensional barriers'
     }
   }
 ];
 
-// Define the path enemies will follow
 export const ENEMY_PATH: Position[] = [
   { x: 0, y: 200 },
   { x: 200, y: 200 },
@@ -154,19 +160,25 @@ export const ENEMY_TYPES = {
     health: 50,
     speed: 1,
     value: 25,
-    color: '#ef4444'
+    color: '#ef4444',
+    name: 'Void Walker',
+    description: 'Basic corrupted entity from the void'
   },
   fast: {
     health: 30,
     speed: 2,
     value: 30,
-    color: '#f59e0b'
+    color: '#f59e0b',
+    name: 'Phase Shifter',
+    description: 'Quick dimensional beings that flicker through space'
   },
   tank: {
     health: 150,
     speed: 0.5,
     value: 50,
-    color: '#8b5cf6'
+    color: '#8b5cf6',
+    name: 'Void Titan',
+    description: 'Massive corrupted behemoth, slow but devastating'
   }
 };
 
@@ -181,4 +193,17 @@ export const WAVE_CONFIG = [
   { type: 'tank' as const, count: 8, interval: 1200 },
   { type: 'fast' as const, count: 15, interval: 400 },
   { type: 'basic' as const, count: 30, interval: 400 }
+];
+
+export const LEADERBOARD_DATA = [
+  { rank: 1, name: 'Commander_Nova', score: 125400, wave: 10 },
+  { rank: 2, name: 'VoidSlayer_X', score: 98750, wave: 10 },
+  { rank: 3, name: 'ArcaneDefender', score: 87230, wave: 9 },
+  { rank: 4, name: 'CyberGuardian', score: 76500, wave: 9 },
+  { rank: 5, name: 'PhaseHunter', score: 65890, wave: 8 },
+  { rank: 6, name: 'StormBreaker', score: 54200, wave: 8 },
+  { rank: 7, name: 'FrostWarden', score: 48900, wave: 7 },
+  { rank: 8, name: 'ThunderStrike', score: 42100, wave: 7 },
+  { rank: 9, name: 'ShadowReaper', score: 38450, wave: 6 },
+  { rank: 10, name: 'ChaosKnight', score: 32800, wave: 6 }
 ];

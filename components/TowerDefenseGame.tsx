@@ -13,7 +13,8 @@ import {
   ENEMY_TYPES,
   GRID_SIZE,
   WAVE_DELAY,
-  INITIAL_GAME_START_DELAY
+  GAME_LORE,
+  LEADERBOARD_DATA
 } from '@/lib/gameConfig';
 import {
   createEnemy,
@@ -33,9 +34,16 @@ import {
   applyStatusEffect,
   updateEnemyStatusEffects
 } from '@/lib/gameEngine';
+import { useSound } from '@/hooks/useSound';
+import { HelpModal, InfoModal } from './Modal';
+
+type GameScreen = 'menu' | 'playing';
 
 const TowerDefenseGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [screen, setScreen] = useState<GameScreen>('menu');
+  const [showHelp, setShowHelp] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     money: STARTING_MONEY,
     lives: STARTING_LIVES,
@@ -48,8 +56,8 @@ const TowerDefenseGame: React.FC = () => {
     gameStatus: 'waiting',
     selectedTowerType: null,
     nukeCharges: STARTING_NUKES,
-    waveStartTime: null,
-    gameStartTime: Date.now() + INITIAL_GAME_START_DELAY
+    waveStartTime: Date.now() + 15000,
+    gameStartTime: null
   });
 
   const [waveInProgress, setWaveInProgress] = useState(false);
@@ -59,12 +67,37 @@ const TowerDefenseGame: React.FC = () => {
   const enemyCounterRef = useRef<number>(0);
   const towerCounterRef = useRef<number>(0);
   const projectileCounterRef = useRef<number>(0);
+  const lastSoundTime = useRef<{ [key: string]: number }>({});
 
-  // Auto-start game and waves
+  const { playSound, muted, setMuted } = useSound();
+
+  const throttleSound = (soundType: string, minInterval: number = 100) => {
+    const now = Date.now();
+    const lastTime = lastSoundTime.current[soundType] || 0;
+    if (now - lastTime > minInterval) {
+      lastSoundTime.current[soundType] = now;
+      return true;
+    }
+    return false;
+  };
+
+  const startGame = () => {
+    playSound('menuClick');
+    setScreen('playing');
+    setGameState(prev => ({
+      ...prev,
+      gameStatus: 'waiting',
+      waveStartTime: Date.now() + 15000
+    }));
+  };
+
+  // Auto-start waves
   useEffect(() => {
-    if (gameState.gameStatus === 'waiting' && gameState.gameStartTime) {
+    if (screen !== 'playing') return;
+
+    if (gameState.gameStatus === 'waiting' && gameState.waveStartTime && !waveInProgress) {
       const checkInterval = setInterval(() => {
-        if (Date.now() >= gameState.gameStartTime!) {
+        if (Date.now() >= gameState.waveStartTime!) {
           setGameState(prev => ({ ...prev, gameStatus: 'playing' }));
           startNextWave();
           clearInterval(checkInterval);
@@ -82,11 +115,11 @@ const TowerDefenseGame: React.FC = () => {
       }, 100);
       return () => clearInterval(checkInterval);
     }
-  }, [gameState.gameStatus, gameState.gameStartTime, gameState.waveStartTime, waveInProgress]);
+  }, [gameState.gameStatus, gameState.waveStartTime, waveInProgress, screen]);
 
   // Game loop
   useEffect(() => {
-    if (gameState.gameStatus !== 'playing') return;
+    if (gameState.gameStatus !== 'playing' || screen !== 'playing') return;
 
     const gameLoop = () => {
       const currentTime = Date.now();
@@ -135,6 +168,23 @@ const TowerDefenseGame: React.FC = () => {
                 `projectile-${projectileCounterRef.current++}`
               );
               newProjectiles.push(projectile);
+
+              // Play tower sound
+              const soundMap: { [key: string]: any } = {
+                basic: 'basicShoot',
+                sniper: 'sniperShoot',
+                cannon: 'cannonShoot',
+                fireMage: 'fireShoot',
+                lightning: 'lightningShoot',
+                arcane: 'arcaneShoot',
+                iceTower: 'iceShoot',
+                slow: 'slowShoot',
+                poison: 'poisonShoot'
+              };
+              if (throttleSound(tower.type, 150)) {
+                playSound(soundMap[tower.type] || 'basicShoot');
+              }
+
               return { ...tower, lastFireTime: currentTime };
             }
           }
@@ -167,12 +217,15 @@ const TowerDefenseGame: React.FC = () => {
           if (distance < 10) {
             projectilesToRemove.push(projectile.id);
 
+            if (throttleSound('enemyHit', 50)) {
+              playSound('enemyHit');
+            }
+
             // Handle special effects
             if (projectile.specialEffect) {
               const effect = projectile.specialEffect;
 
               if (effect.type === 'aoe') {
-                // Apply AOE damage
                 let statusEffect: StatusEffect | undefined;
                 if (projectile.towerType === 'iceTower') {
                   statusEffect = {
@@ -190,7 +243,6 @@ const TowerDefenseGame: React.FC = () => {
                   statusEffect
                 );
               } else if (effect.type === 'chain') {
-                // Chain lightning
                 const hits = applyChainLightning(
                   newState.enemies,
                   targetEnemy,
@@ -243,7 +295,6 @@ const TowerDefenseGame: React.FC = () => {
                 }
               }
             } else {
-              // Normal damage
               const enemyIndex = newState.enemies.findIndex(e => e.id === targetEnemy.id);
               if (enemyIndex >= 0) {
                 newState.enemies[enemyIndex] = damageEnemy(
@@ -274,6 +325,9 @@ const TowerDefenseGame: React.FC = () => {
         let moneyGained = 0;
         let scoreGained = 0;
         const deadEnemies = newState.enemies.filter(isEnemyDead);
+        if (deadEnemies.length > 0 && throttleSound('enemyDeath', 100)) {
+          playSound('enemyDeath');
+        }
         deadEnemies.forEach(enemy => {
           moneyGained += enemy.value;
           scoreGained += enemy.value * 10;
@@ -284,8 +338,9 @@ const TowerDefenseGame: React.FC = () => {
         newState.score += scoreGained;
 
         // Check game over
-        if (newState.lives <= 0) {
+        if (newState.lives <= 0 && prevState.lives > 0) {
           newState.gameStatus = 'gameOver';
+          playSound('gameOver');
         }
 
         return newState;
@@ -294,11 +349,11 @@ const TowerDefenseGame: React.FC = () => {
 
     const intervalId = setInterval(gameLoop, 1000 / 60);
     return () => clearInterval(intervalId);
-  }, [gameState.gameStatus]);
+  }, [gameState.gameStatus, screen]);
 
   // Wave spawning
   useEffect(() => {
-    if (!waveInProgress || gameState.gameStatus !== 'playing') return;
+    if (!waveInProgress || gameState.gameStatus !== 'playing' || screen !== 'playing') return;
 
     const waveConfig = getWaveEnemies(gameState.wave);
     if (!waveConfig || enemiesSpawnedInWave >= waveConfig.count) {
@@ -306,7 +361,6 @@ const TowerDefenseGame: React.FC = () => {
         setWaveInProgress(false);
         setEnemiesSpawnedInWave(0);
 
-        // Schedule next wave
         const nextWave = gameState.wave + 1;
         if (getWaveEnemies(nextWave)) {
           setGameState(prev => ({
@@ -315,6 +369,7 @@ const TowerDefenseGame: React.FC = () => {
           }));
         } else {
           setGameState(prev => ({ ...prev, gameStatus: 'won' }));
+          playSound('victory');
         }
       }
       return;
@@ -335,22 +390,24 @@ const TowerDefenseGame: React.FC = () => {
     }, waveConfig.interval);
 
     return () => clearInterval(spawnInterval);
-  }, [waveInProgress, gameState.wave, enemiesSpawnedInWave, gameState.enemies.length, gameState.gameStatus]);
+  }, [waveInProgress, gameState.wave, enemiesSpawnedInWave, gameState.enemies.length, gameState.gameStatus, screen]);
 
   // Render game
   useEffect(() => {
+    if (screen !== 'playing') return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = '#0f172a';
+    // Clear canvas with dark background
+    ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // Draw grid
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#1a1a2e';
     ctx.lineWidth = 1;
     for (let x = 0; x <= GAME_WIDTH; x += GRID_SIZE) {
       ctx.beginPath();
@@ -366,7 +423,7 @@ const TowerDefenseGame: React.FC = () => {
     }
 
     // Draw path
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = '#2a2a4e';
     ctx.lineWidth = 40;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -393,7 +450,6 @@ const TowerDefenseGame: React.FC = () => {
         ctx.fill();
       }
 
-      // Tower colors by type
       const colors: Record<string, string> = {
         basic: '#ef4444',
         sniper: '#dc2626',
@@ -420,7 +476,6 @@ const TowerDefenseGame: React.FC = () => {
     gameState.enemies.forEach(enemy => {
       const color = ENEMY_TYPES[enemy.type].color;
 
-      // Draw glow for status effects
       if (enemy.statusEffects.length > 0) {
         const mainEffect = enemy.statusEffects[0];
         const effectColors = {
@@ -441,7 +496,6 @@ const TowerDefenseGame: React.FC = () => {
       ctx.arc(enemy.position.x, enemy.position.y, 12, 0, Math.PI * 2);
       ctx.fill();
 
-      // Health bar
       const healthBarWidth = 24;
       const healthBarHeight = 4;
       const healthPercentage = enemy.health / enemy.maxHealth;
@@ -463,7 +517,7 @@ const TowerDefenseGame: React.FC = () => {
       );
     });
 
-    // Draw projectiles with colors
+    // Draw projectiles
     gameState.projectiles.forEach(projectile => {
       const projectileColors: Record<string, string> = {
         basic: '#fbbf24',
@@ -482,7 +536,6 @@ const TowerDefenseGame: React.FC = () => {
       ctx.arc(projectile.position.x, projectile.position.y, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Glow effect for magic projectiles
       if (['fireMage', 'lightning', 'arcane'].includes(projectile.towerType)) {
         ctx.globalAlpha = 0.5;
         ctx.beginPath();
@@ -491,7 +544,7 @@ const TowerDefenseGame: React.FC = () => {
         ctx.globalAlpha = 1;
       }
     });
-  }, [gameState]);
+  }, [gameState, screen]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!gameState.selectedTowerType || gameState.gameStatus !== 'playing') return;
@@ -510,7 +563,6 @@ const TowerDefenseGame: React.FC = () => {
       return;
     }
 
-    // Check path collision
     const onPath = gameState.path.some((point, index) => {
       if (index === 0) return false;
       const prevPoint = gameState.path[index - 1];
@@ -520,7 +572,6 @@ const TowerDefenseGame: React.FC = () => {
 
     if (onPath) return;
 
-    // Check tower collision
     const tooClose = gameState.towers.some(tower => {
       const dist = getDistance({ x, y }, tower.position);
       return dist < 35;
@@ -534,6 +585,7 @@ const TowerDefenseGame: React.FC = () => {
       `tower-${towerCounterRef.current++}`
     );
 
+    playSound('towerPlace');
     setGameState(prev => ({
       ...prev,
       towers: [...prev.towers, newTower],
@@ -550,17 +602,20 @@ const TowerDefenseGame: React.FC = () => {
 
     if (!waveConfig) {
       setGameState(prev => ({ ...prev, gameStatus: 'won' }));
+      playSound('victory');
       return;
     }
 
+    playSound('waveStart');
     setGameState(prev => ({ ...prev, wave: nextWave, waveStartTime: null }));
     setWaveInProgress(true);
     setEnemiesSpawnedInWave(0);
   };
 
   const useNuke = () => {
-    if (gameState.nukeCharges <= 0 || gameState.enemies.length === 0) return;
+    if (gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing') return;
 
+    playSound('nuke');
     setGameState(prev => ({
       ...prev,
       enemies: [],
@@ -570,6 +625,7 @@ const TowerDefenseGame: React.FC = () => {
   };
 
   const selectTower = (type: TowerTypeId) => {
+    playSound('menuClick');
     setGameState(prev => ({
       ...prev,
       selectedTowerType: prev.selectedTowerType === type ? null : type
@@ -586,122 +642,244 @@ const TowerDefenseGame: React.FC = () => {
     return seconds > 0 ? seconds : null;
   };
 
-  const getTimeUntilStart = () => {
-    if (!gameState.gameStartTime || gameState.gameStatus !== 'waiting') return null;
-    const seconds = Math.ceil((gameState.gameStartTime - Date.now()) / 1000);
-    return seconds > 0 ? seconds : null;
-  };
-
   const timeUntilWave = getTimeUntilWave();
-  const timeUntilStart = getTimeUntilStart();
 
+  // MENU SCREEN
+  if (screen === 'menu') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center p-4 retro-bg">
+        <div className="text-center max-w-4xl">
+          <h1 className="text-6xl font-bold mb-4 retro-text text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 animate-pulse">
+            {GAME_LORE.title}
+          </h1>
+          <div className="bg-slate-900 bg-opacity-80 border-4 border-cyan-500 rounded-lg p-8 mb-8 retro-box">
+            <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
+              {GAME_LORE.intro}
+            </p>
+            <p className="text-cyan-200 text-sm leading-relaxed">
+              {GAME_LORE.story}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <button
+              onClick={startGame}
+              className="retro-button bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-cyan-400 text-2xl transition-all hover:scale-105"
+            >
+              START MISSION
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setShowInfo(true);
+              }}
+              className="retro-button bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-purple-400 text-2xl transition-all hover:scale-105"
+            >
+              INTEL DATABASE
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setShowHelp(true);
+              }}
+              className="retro-button bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-green-400 text-2xl transition-all hover:scale-105"
+            >
+              TRAINING
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setMuted(!muted);
+              }}
+              className="retro-button bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 px-8 rounded-lg border-4 border-orange-400 text-2xl transition-all hover:scale-105"
+            >
+              SOUND: {muted ? 'OFF' : 'ON'}
+            </button>
+          </div>
+
+          <div className="text-cyan-400 text-sm animate-pulse">
+            Press START MISSION to defend the Eternal Citadel
+          </div>
+        </div>
+
+        <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+        <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      </div>
+    );
+  }
+
+  // GAME SCREEN
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-4">
-      {/* Header Stats */}
-      <div className="mb-4 flex gap-3 items-center flex-wrap justify-center">
-        <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg">
-          💰 ${gameState.money}
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 p-4 retro-bg">
+      <div className="flex gap-4 max-w-[1600px] mx-auto">
+        {/* LEFT PANEL - LEADERBOARD */}
+        <div className="w-64 flex-shrink-0">
+          <div className="bg-slate-900 bg-opacity-90 border-4 border-yellow-500 rounded-lg p-4 retro-box">
+            <h2 className="text-2xl font-bold text-yellow-400 mb-4 text-center retro-text">TOP DEFENDERS</h2>
+            <div className="space-y-2 max-h-[700px] overflow-y-auto">
+              {LEADERBOARD_DATA.map((entry) => (
+                <div
+                  key={entry.rank}
+                  className={`p-2 rounded ${
+                    entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-900 to-orange-900 border-2 border-yellow-500' : 'bg-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-yellow-400 font-bold">#{entry.rank}</span>
+                    <span className="text-xs text-cyan-400">W{entry.wave}</span>
+                  </div>
+                  <div className="text-white text-sm font-semibold truncate">{entry.name}</div>
+                  <div className="text-green-400 text-xs">{entry.score.toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg">
-          ❤️ {gameState.lives}
-        </div>
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg">
-          🌊 Wave {gameState.wave}
-        </div>
-        <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg">
-          ⭐ {gameState.score}
-        </div>
-        <button
-          onClick={useNuke}
-          disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0}
-          className={`px-4 py-2 rounded-lg font-bold shadow-lg transition-all ${
-            gameState.nukeCharges > 0 && gameState.enemies.length > 0
-              ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:scale-105'
-              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          💣 Nuke ({gameState.nukeCharges})
-        </button>
-      </div>
 
-      {/* Timer Display */}
-      {timeUntilStart && (
-        <div className="mb-4 text-2xl font-bold text-green-400 bg-slate-800 px-6 py-3 rounded-lg">
-          Game starts in {timeUntilStart}s
-        </div>
-      )}
-      {timeUntilWave && !waveInProgress && gameState.gameStatus === 'playing' && (
-        <div className="mb-4 text-xl font-bold text-blue-400 bg-slate-800 px-6 py-3 rounded-lg">
-          Next wave in {timeUntilWave}s
-        </div>
-      )}
+        {/* CENTER - GAME */}
+        <div className="flex-grow flex flex-col items-center">
+          <div className="mb-3 flex gap-2 items-center flex-wrap justify-center">
+            <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+              ${gameState.money}
+            </div>
+            <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+              ❤️ {gameState.lives}
+            </div>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+              Wave {gameState.wave}
+            </div>
+            <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-lg font-bold retro-box">
+              {gameState.score}
+            </div>
+            <button
+              onClick={useNuke}
+              disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing'}
+              className={`px-4 py-2 rounded-lg font-bold retro-button transition-all ${
+                gameState.nukeCharges > 0 && gameState.enemies.length > 0 && gameState.gameStatus === 'playing'
+                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:scale-105 border-2 border-orange-400'
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
+              }`}
+            >
+              💣 NUKE ({gameState.nukeCharges})
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setShowHelp(true);
+              }}
+              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:scale-105 border-2 border-green-400"
+            >
+              ?
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setShowInfo(true);
+              }}
+              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-105 border-2 border-purple-400"
+            >
+              INFO
+            </button>
+          </div>
 
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        width={GAME_WIDTH}
-        height={GAME_HEIGHT}
-        className="border-4 border-slate-700 cursor-crosshair shadow-2xl"
-        onClick={handleCanvasClick}
-      />
+          {timeUntilWave && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
+            <div className="mb-3 text-xl font-bold text-cyan-400 bg-slate-900 px-6 py-2 rounded-lg border-2 border-cyan-500 retro-box animate-pulse">
+              Next wave in {timeUntilWave}s
+            </div>
+          )}
 
-      {/* Tower Categories */}
-      <div className="mt-4 flex gap-2">
-        {['all', 'physical', 'magic', 'support'].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat as any)}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all capitalize ${
-              selectedCategory === cat
-                ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                : 'bg-slate-700 text-white hover:bg-slate-600'
-            }`}
-          >
-            {cat === 'all' ? '🎯 All' : cat === 'physical' ? '⚔️ Physical' : cat === 'magic' ? '✨ Magic' : '🛡️ Support'}
-          </button>
-        ))}
-      </div>
+          <canvas
+            ref={canvasRef}
+            width={GAME_WIDTH}
+            height={GAME_HEIGHT}
+            className="border-4 border-cyan-500 retro-box shadow-2xl"
+            onClick={handleCanvasClick}
+          />
 
-      {/* Tower Selection */}
-      <div className="mt-3 grid grid-cols-3 gap-2 max-w-4xl">
-        {filteredTowers.map(tower => (
-          <button
-            key={tower.type}
-            onClick={() => selectTower(tower.type)}
-            className={`px-3 py-2 rounded-lg font-semibold transition-all text-sm ${
-              gameState.selectedTowerType === tower.type
-                ? 'bg-blue-600 text-white ring-2 ring-blue-400 scale-105'
-                : 'bg-slate-700 text-white hover:bg-slate-600'
-            } ${gameState.money < tower.cost ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={gameState.money < tower.cost}
-            title={tower.description + (tower.specialAbility ? ` - ${tower.specialAbility.description}` : '')}
-          >
-            <div className="font-bold">{tower.name}</div>
-            <div className="text-xs text-yellow-300">${tower.cost}</div>
-          </button>
-        ))}
-      </div>
+          {gameState.gameStatus === 'gameOver' && (
+            <div className="mt-4 text-3xl font-bold bg-slate-900 px-8 py-4 rounded-lg border-4 border-red-500 retro-box animate-pulse">
+              <div className="text-red-400">CITADEL BREACHED</div>
+              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score}</div>
+              <button
+                onClick={() => {
+                  playSound('menuClick');
+                  setScreen('menu');
+                }}
+                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-lg retro-button"
+              >
+                Return to Menu
+              </button>
+            </div>
+          )}
 
-      {gameState.selectedTowerType && (
-        <div className="mt-3 text-white bg-slate-800 px-4 py-2 rounded-lg max-w-xl text-center">
-          {TOWER_TYPES.find(t => t.type === gameState.selectedTowerType)?.description}
-          {TOWER_TYPES.find(t => t.type === gameState.selectedTowerType)?.specialAbility && (
-            <span className="text-blue-300"> - {TOWER_TYPES.find(t => t.type === gameState.selectedTowerType)?.specialAbility?.description}</span>
+          {gameState.gameStatus === 'won' && (
+            <div className="mt-4 text-3xl font-bold bg-slate-900 px-8 py-4 rounded-lg border-4 border-green-500 retro-box animate-pulse">
+              <div className="text-green-400">CITADEL SECURED!</div>
+              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score}</div>
+              <button
+                onClick={() => {
+                  playSound('menuClick');
+                  setScreen('menu');
+                }}
+                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-lg retro-button"
+              >
+                Return to Menu
+              </button>
+            </div>
           )}
         </div>
-      )}
 
-      {gameState.gameStatus === 'gameOver' && (
-        <div className="mt-4 text-red-400 text-2xl font-bold bg-slate-800 px-6 py-3 rounded-lg shadow-xl">
-          💀 Game Over! Final Score: {gameState.score}
-        </div>
-      )}
+        {/* RIGHT PANEL - TOWERS */}
+        <div className="w-80 flex-shrink-0">
+          <div className="bg-slate-900 bg-opacity-90 border-4 border-cyan-500 rounded-lg p-4 retro-box max-h-[800px] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4 text-center retro-text">DEFENSE SYSTEMS</h2>
 
-      {gameState.gameStatus === 'won' && (
-        <div className="mt-4 text-green-400 text-2xl font-bold bg-slate-800 px-6 py-3 rounded-lg shadow-xl">
-          🏆 Victory! Final Score: {gameState.score}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {['all', 'physical', 'magic', 'support'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    playSound('menuClick');
+                    setSelectedCategory(cat as any);
+                  }}
+                  className={`px-3 py-1 rounded-lg font-semibold text-xs retro-button transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-cyan-600 text-white border-2 border-cyan-400'
+                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                  }`}
+                >
+                  {cat === 'all' ? 'ALL' : cat === 'physical' ? '⚔️ PHY' : cat === 'magic' ? '✨ MAG' : '🛡️ SUP'}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              {filteredTowers.map(tower => (
+                <button
+                  key={tower.type}
+                  onClick={() => selectTower(tower.type)}
+                  disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
+                  className={`w-full p-3 rounded-lg text-left transition-all retro-button ${
+                    gameState.selectedTowerType === tower.type
+                      ? 'bg-cyan-600 text-white border-2 border-cyan-400 scale-105'
+                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                  } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <div className="font-bold text-sm">{tower.name}</div>
+                  <div className="text-xs text-yellow-300 font-bold">${tower.cost}</div>
+                  <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
+                  {tower.specialAbility && (
+                    <div className="text-xs text-cyan-300 mt-1">⚡ {tower.specialAbility.description}</div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
     </div>
   );
 };
