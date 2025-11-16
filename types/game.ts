@@ -10,6 +10,8 @@ export interface StatusEffect {
   appliedAt: number; // timestamp
 }
 
+export type EnemyTypeId = 'basic' | 'fast' | 'tank' | 'swarm' | 'elite' | 'boss' | 'healer' | 'flying';
+
 export interface Enemy {
   id: string;
   position: Position;
@@ -19,7 +21,7 @@ export interface Enemy {
   baseSpeed: number; // Original speed before effects
   pathIndex: number;
   value: number; // Money earned when killed
-  type: 'basic' | 'fast' | 'tank';
+  type: EnemyTypeId;
   statusEffects: StatusEffect[];
 }
 
@@ -80,6 +82,7 @@ export interface TowerType {
   type: TowerTypeId;
   category: TowerCategory;
   name: string;
+  icon: string;
   cost: number;
   range: number;
   damage: number;

@@ -108,21 +108,38 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
       <div className="text-white space-y-6">
         <section>
           <h3 className="text-2xl font-bold text-red-400 mb-3">👾 Enemy Types</h3>
-          <div className="space-y-3">
-            <div className="bg-slate-800 p-3 rounded border-l-4 border-red-500">
-              <h4 className="font-bold text-red-300">Void Walker</h4>
-              <p className="text-sm text-gray-300">HP: 50 | Speed: Normal | Reward: $25</p>
-              <p className="text-xs text-gray-400 mt-1">Basic corrupted entity from the void</p>
+          <div className="space-y-2 grid grid-cols-2 gap-2">
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-red-500">
+              <h4 className="font-bold text-red-300 text-sm">👾 Void Walker</h4>
+              <p className="text-xs text-gray-300">HP: 50 | Speed: 1x | $25</p>
             </div>
-            <div className="bg-slate-800 p-3 rounded border-l-4 border-orange-500">
-              <h4 className="font-bold text-orange-300">Phase Shifter</h4>
-              <p className="text-sm text-gray-300">HP: 30 | Speed: Fast | Reward: $30</p>
-              <p className="text-xs text-gray-400 mt-1">Quick dimensional beings that flicker through space</p>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-orange-500">
+              <h4 className="font-bold text-orange-300 text-sm">⚡ Phase Shifter</h4>
+              <p className="text-xs text-gray-300">HP: 30 | Speed: 2x | $30</p>
             </div>
-            <div className="bg-slate-800 p-3 rounded border-l-4 border-purple-500">
-              <h4 className="font-bold text-purple-300">Void Titan</h4>
-              <p className="text-sm text-gray-300">HP: 150 | Speed: Slow | Reward: $50</p>
-              <p className="text-xs text-gray-400 mt-1">Massive corrupted behemoth, slow but devastating</p>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-purple-500">
+              <h4 className="font-bold text-purple-300 text-sm">🛡️ Void Titan</h4>
+              <p className="text-xs text-gray-300">HP: 150 | Speed: 0.5x | $50</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-green-500">
+              <h4 className="font-bold text-green-300 text-sm">🦟 Swarm Drone</h4>
+              <p className="text-xs text-gray-300">HP: 20 | Speed: 1.5x | $15</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-pink-500">
+              <h4 className="font-bold text-pink-300 text-sm">👹 Void Champion</h4>
+              <p className="text-xs text-gray-300">HP: 200 | Speed: 0.8x | $75</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-red-700">
+              <h4 className="font-bold text-red-400 text-sm">💀 Corruption Lord</h4>
+              <p className="text-xs text-gray-300">HP: 500 | Speed: 0.3x | $150</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-teal-500">
+              <h4 className="font-bold text-teal-300 text-sm">🔮 Void Mender</h4>
+              <p className="text-xs text-gray-300">HP: 80 | Speed: 0.7x | $60</p>
+            </div>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-purple-400">
+              <h4 className="font-bold text-purple-400 text-sm">🦇 Sky Terror</h4>
+              <p className="text-xs text-gray-300">HP: 40 | Speed: 2.5x | $40</p>
             </div>
           </div>
         </section>
@@ -133,15 +150,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
           <h4 className="text-lg font-bold text-red-300 mt-4 mb-2">⚔️ Physical Attack</h4>
           <div className="space-y-2">
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-red-200">Sentinel Crossbow</span> - $100 | Dmg: 10 | Range: 120 | Rate: 1/s
+              <span className="font-bold text-red-200">🏹 Sentinel Crossbow</span> - $100 | Dmg: 10 | Range: 120 | Rate: 1/s
               <p className="text-xs text-gray-400">Ancient automated defense, precise and reliable</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-red-200">Void Piercer</span> - $200 | Dmg: 35 | Range: 220 | Rate: 0.5/s
+              <span className="font-bold text-red-200">🎯 Void Piercer</span> - $200 | Dmg: 35 | Range: 220 | Rate: 0.5/s
               <p className="text-xs text-gray-400">Experimental railgun that tears through dimensional fabric</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-orange-200">Thunder Howitzer</span> - $180 | Dmg: 25 | Range: 100 | Rate: 1.5/s
+              <span className="font-bold text-orange-200">💥 Thunder Howitzer</span> - $180 | Dmg: 25 | Range: 100 | Rate: 1.5/s
               <p className="text-xs text-gray-400">Explosive artillery creating shockwaves of destruction (AOE 50px)</p>
             </div>
           </div>
@@ -149,15 +166,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
           <h4 className="text-lg font-bold text-purple-300 mt-4 mb-2">✨ Magic Attack</h4>
           <div className="space-y-2">
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-purple-200">Inferno Conduit</span> - $250 | Dmg: 20 | Range: 140 | Rate: 0.8/s
+              <span className="font-bold text-purple-200">🔥 Inferno Conduit</span> - $250 | Dmg: 20 | Range: 140 | Rate: 0.8/s
               <p className="text-xs text-gray-400">Channels pure flame from the elemental plane (AOE 60px)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-purple-200">Storm Caller</span> - $300 | Dmg: 15 | Range: 160 | Rate: 1.2/s
+              <span className="font-bold text-purple-200">⚡ Storm Caller</span> - $300 | Dmg: 15 | Range: 160 | Rate: 1.2/s
               <p className="text-xs text-gray-400">Summons chain lightning from the tempest realm (chains to 3 enemies)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-indigo-200">Aether Spire</span> - $350 | Dmg: 40 | Range: 150 | Rate: 0.6/s
+              <span className="font-bold text-indigo-200">✨ Aether Spire</span> - $350 | Dmg: 40 | Range: 150 | Rate: 0.6/s
               <p className="text-xs text-gray-400">Harnesses raw reality-bending energy</p>
             </div>
           </div>
@@ -165,15 +182,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
           <h4 className="text-lg font-bold text-blue-300 mt-4 mb-2">🛡️ Support/Magic Defense</h4>
           <div className="space-y-2">
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-cyan-200">Cryo Stasis Matrix</span> - $200 | Dmg: 5 | Range: 130 | Rate: 1/s
+              <span className="font-bold text-cyan-200">❄️ Cryo Stasis Matrix</span> - $200 | Dmg: 5 | Range: 130 | Rate: 1/s
               <p className="text-xs text-gray-400">Freezes enemies in temporal suspension (2s freeze)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-cyan-200">Gravity Well</span> - $150 | Dmg: 3 | Range: 150 | Rate: 1.5/s
+              <span className="font-bold text-cyan-200">🌀 Gravity Well</span> - $150 | Dmg: 3 | Range: 150 | Rate: 1.5/s
               <p className="text-xs text-gray-400">Warps spacetime to slow enemy movement (50% slow for 3s)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-green-200">Plague Spewer</span> - $180 | Dmg: 8 | Range: 120 | Rate: 0.7/s
+              <span className="font-bold text-green-200">☠️ Plague Spewer</span> - $180 | Dmg: 8 | Range: 120 | Rate: 0.7/s
               <p className="text-xs text-gray-400">Spreads bio-engineered corruption toxin (5 dmg/s for 4s)</p>
             </div>
           </div>

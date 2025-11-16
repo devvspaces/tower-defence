@@ -362,15 +362,11 @@ const TowerDefenseGame: React.FC = () => {
         setEnemiesSpawnedInWave(0);
 
         const nextWave = gameState.wave + 1;
-        if (getWaveEnemies(nextWave)) {
-          setGameState(prev => ({
-            ...prev,
-            waveStartTime: Date.now() + WAVE_DELAY
-          }));
-        } else {
-          setGameState(prev => ({ ...prev, gameStatus: 'won' }));
-          playSound('victory');
-        }
+        // Waves are endless, always schedule next wave
+        setGameState(prev => ({
+          ...prev,
+          waveStartTime: Date.now() + WAVE_DELAY
+        }));
       }
       return;
     }
@@ -475,6 +471,7 @@ const TowerDefenseGame: React.FC = () => {
     // Draw enemies with effects
     gameState.enemies.forEach(enemy => {
       const color = ENEMY_TYPES[enemy.type].color;
+      const icon = ENEMY_TYPES[enemy.type].icon;
 
       if (enemy.statusEffects.length > 0) {
         const mainEffect = enemy.statusEffects[0];
@@ -491,19 +488,20 @@ const TowerDefenseGame: React.FC = () => {
         ctx.globalAlpha = 1;
       }
 
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(enemy.position.x, enemy.position.y, 12, 0, Math.PI * 2);
-      ctx.fill();
+      // Draw enemy icon/emoji
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(icon, enemy.position.x, enemy.position.y);
 
-      const healthBarWidth = 24;
+      const healthBarWidth = 28;
       const healthBarHeight = 4;
       const healthPercentage = enemy.health / enemy.maxHealth;
 
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(
         enemy.position.x - healthBarWidth / 2,
-        enemy.position.y - 20,
+        enemy.position.y - 22,
         healthBarWidth,
         healthBarHeight
       );
@@ -511,7 +509,7 @@ const TowerDefenseGame: React.FC = () => {
       ctx.fillStyle = healthPercentage > 0.5 ? '#22c55e' : healthPercentage > 0.25 ? '#f59e0b' : '#ef4444';
       ctx.fillRect(
         enemy.position.x - healthBarWidth / 2,
-        enemy.position.y - 20,
+        enemy.position.y - 22,
         healthBarWidth * healthPercentage,
         healthBarHeight
       );
@@ -601,8 +599,7 @@ const TowerDefenseGame: React.FC = () => {
     const waveConfig = getWaveEnemies(nextWave);
 
     if (!waveConfig) {
-      setGameState(prev => ({ ...prev, gameStatus: 'won' }));
-      playSound('victory');
+      // This should never happen now since waves are endless
       return;
     }
 
@@ -780,11 +777,34 @@ const TowerDefenseGame: React.FC = () => {
             >
               INFO
             </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                if (window.confirm('Are you sure you want to quit? Your progress will be lost.')) {
+                  setScreen('menu');
+                }
+              }}
+              className="px-4 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-red-600 to-red-700 text-white hover:scale-105 border-2 border-red-400"
+            >
+              QUIT
+            </button>
           </div>
 
           {timeUntilWave && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
-            <div className="mb-3 text-xl font-bold text-cyan-400 bg-slate-900 px-6 py-2 rounded-lg border-2 border-cyan-500 retro-box animate-pulse">
-              Next wave in {timeUntilWave}s
+            <div className="mb-3 flex gap-3 items-center">
+              <div className="text-xl font-bold text-cyan-400 bg-slate-900 px-6 py-2 rounded-lg border-2 border-cyan-500 retro-box">
+                Next wave in {timeUntilWave}s
+              </div>
+              <button
+                onClick={() => {
+                  playSound('waveStart');
+                  setGameState(prev => ({ ...prev, waveStartTime: null }));
+                  startNextWave();
+                }}
+                className="px-6 py-2 rounded-lg font-bold retro-button bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:scale-105 border-2 border-green-400 animate-pulse"
+              >
+                START WAVE NOW
+              </button>
             </div>
           )}
 
@@ -799,23 +819,7 @@ const TowerDefenseGame: React.FC = () => {
           {gameState.gameStatus === 'gameOver' && (
             <div className="mt-4 text-3xl font-bold bg-slate-900 px-8 py-4 rounded-lg border-4 border-red-500 retro-box animate-pulse">
               <div className="text-red-400">CITADEL BREACHED</div>
-              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score}</div>
-              <button
-                onClick={() => {
-                  playSound('menuClick');
-                  setScreen('menu');
-                }}
-                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-lg retro-button"
-              >
-                Return to Menu
-              </button>
-            </div>
-          )}
-
-          {gameState.gameStatus === 'won' && (
-            <div className="mt-4 text-3xl font-bold bg-slate-900 px-8 py-4 rounded-lg border-4 border-green-500 retro-box animate-pulse">
-              <div className="text-green-400">CITADEL SECURED!</div>
-              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score}</div>
+              <div className="text-cyan-400 text-xl mt-2">Final Score: {gameState.score} | Waves Survived: {gameState.wave}</div>
               <button
                 onClick={() => {
                   playSound('menuClick');
@@ -865,8 +869,13 @@ const TowerDefenseGame: React.FC = () => {
                       : 'bg-slate-800 text-white hover:bg-slate-700'
                   } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <div className="font-bold text-sm">{tower.name}</div>
-                  <div className="text-xs text-yellow-300 font-bold">${tower.cost}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{tower.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-bold text-sm">{tower.name}</div>
+                      <div className="text-xs text-yellow-300 font-bold">${tower.cost}</div>
+                    </div>
+                  </div>
                   <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
                   {tower.specialAbility && (
                     <div className="text-xs text-cyan-300 mt-1">⚡ {tower.specialAbility.description}</div>

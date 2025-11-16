@@ -1,7 +1,7 @@
-import { GameState, Enemy, Tower, Projectile, Position, StatusEffect, TowerTypeId } from '@/types/game';
-import { ENEMY_PATH, ENEMY_TYPES, WAVE_CONFIG, TOWER_TYPES } from './gameConfig';
+import { GameState, Enemy, Tower, Projectile, Position, StatusEffect, TowerTypeId, EnemyTypeId } from '@/types/game';
+import { ENEMY_PATH, ENEMY_TYPES, TOWER_TYPES } from './gameConfig';
 
-export function createEnemy(type: 'basic' | 'fast' | 'tank', id: string): Enemy {
+export function createEnemy(type: EnemyTypeId, id: string): Enemy {
   const enemyConfig = ENEMY_TYPES[type];
   return {
     id,
@@ -186,11 +186,13 @@ export function moveProjectile(
   };
 }
 
-export function getWaveEnemies(wave: number): { type: 'basic' | 'fast' | 'tank'; count: number; interval: number } | null {
-  if (wave < 1 || wave > WAVE_CONFIG.length) {
+export function getWaveEnemies(wave: number): { type: EnemyTypeId; count: number; interval: number } | null {
+  if (wave < 1) {
     return null;
   }
-  return WAVE_CONFIG[wave - 1];
+  // Waves are now endless - import generateWave from gameConfig
+  const { generateWave } = require('./gameConfig');
+  return generateWave(wave);
 }
 
 export function damageEnemy(enemy: Enemy, damage: number): Enemy {
