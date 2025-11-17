@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api-client';
 import { useChat } from '@/hooks/useChat';
 
-type SidebarTab = 'leaderboard' | 'chat';
+type SidebarTab = 'leaderboard' | 'overall' | 'chat';
 
 interface SidebarProps {
   defaultTab?: SidebarTab;
@@ -21,6 +21,16 @@ interface LeaderboardEntry {
   wavesCompleted: number;
 }
 
+interface OverallLeaderboardEntry {
+  rank: number;
+  walletAddress: string;
+  username: string | null;
+  totalScore: number;
+  totalGames: number;
+  bestScore: number;
+  bestWaves: number;
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({
   defaultTab = 'leaderboard',
   onClose,
@@ -28,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<SidebarTab>(defaultTab);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [overallLeaderboard, setOverallLeaderboard] = useState<OverallLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,6 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       loadLeaderboard();
+    } else if (activeTab === 'overall') {
+      loadOverallLeaderboard();
     }
   }, [activeTab]);
 
@@ -61,6 +74,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
       setLeaderboard([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadOverallLeaderboard = async () => {
+    setLoading(true);
+    try {
+      const data = await apiClient.getOverallLeaderboard(10);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setOverallLeaderboard(data);
+      } else {
+        console.error('Overall leaderboard data is not an array:', data);
+        setOverallLeaderboard([]);
+      }
+    } catch (error) {
+      console.error('Failed to load overall leaderboard:', error);
+      setOverallLeaderboard([]);
     } finally {
       setLoading(false);
     }
@@ -113,10 +145,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ? 'bg-cyan-600 text-black'
                 : 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
             }`}
-            title="Leaderboard"
+            title="Best Games"
           >
             <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setActiveTab('overall')}
+            className={`flex-1 p-3 rounded-lg transition-all ${
+              activeTab === 'overall'
+                ? 'bg-cyan-600 text-black'
+                : 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
+            }`}
+            title="Overall Rankings"
+          >
+            <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
           </button>
           <button
@@ -138,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'leaderboard' && (
             <div>
-              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">TOP DEFENDERS</h3>
+              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">BEST GAMES</h3>
               {loading ? (
                 <div className="text-center text-gray-400 py-8">Loading...</div>
               ) : leaderboard.length === 0 ? (
@@ -159,6 +204,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div className="flex justify-between text-xs">
                         <span className="text-cyan-300">Score: {entry.score.toLocaleString()}</span>
                         <span className="text-gray-400">Wave {entry.wavesCompleted}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'overall' && (
+            <div>
+              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">TOP DEFENDERS</h3>
+              {loading ? (
+                <div className="text-center text-gray-400 py-8">Loading...</div>
+              ) : overallLeaderboard.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">No games recorded yet</div>
+              ) : (
+                <div className="space-y-2">
+                  {overallLeaderboard.map((entry) => (
+                    <div
+                      key={entry.rank}
+                      className="bg-gray-800 bg-opacity-60 p-3 rounded-lg border border-gray-700 hover:border-cyan-500 transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-cyan-400 font-bold text-lg">#{entry.rank}</span>
+                        <span className="text-gray-300 text-sm flex-1 truncate">
+                          {entry.username || formatAddress(entry.walletAddress)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-xs mt-2">
+                        <span className="text-cyan-300">Total: {entry.totalScore.toLocaleString()}</span>
+                        <span className="text-purple-300">Games: {entry.totalGames}</span>
+                        <span className="text-yellow-300">Best: {entry.bestScore.toLocaleString()}</span>
+                        <span className="text-gray-400">Wave {entry.bestWaves}</span>
                       </div>
                     </div>
                   ))}

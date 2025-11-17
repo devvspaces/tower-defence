@@ -160,6 +160,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getOverallLeaderboard(limit: number = 100) {
+    const response = await this.client.get(`/game/leaderboard/overall?limit=${limit}`);
+    return response.data;
+  }
+
   async getGameHistory(limit: number = 10) {
     const response = await this.client.get(`/game/history?limit=${limit}`);
     return response.data;

@@ -47,7 +47,7 @@ import { ProfileModal } from './ProfileModal';
 import { SettingsModal } from './SettingsModal';
 
 type GameScreen = 'menu' | 'playing';
-type SidebarTab = 'leaderboard' | 'chat';
+type SidebarTab = 'leaderboard' | 'overall' | 'chat';
 
 const TowerDefenseGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
