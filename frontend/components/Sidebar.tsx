@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api-client';
+import { useChat } from '@/hooks/useChat';
 
 type SidebarTab = 'leaderboard' | 'chat';
 
@@ -28,13 +29,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeTab, setActiveTab] = useState<SidebarTab>(defaultTab);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [messageInput, setMessageInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated, user } = useAuth();
+  const { messages, isConnected, sendMessage, sendTypingIndicator } = useChat();
 
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       loadLeaderboard();
     }
   }, [activeTab]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, activeTab]);
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -57,6 +68,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim() || !isConnected) return;
+
+    sendMessage(messageInput);
+    setMessageInput('');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageInput(e.target.value);
+    sendTypingIndicator();
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -151,28 +180,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col">
+                  {/* Connection Status */}
+                  {!isConnected && (
+                    <div className="bg-yellow-900 bg-opacity-30 border border-yellow-500 text-yellow-200 px-3 py-2 rounded-lg mb-2 text-xs text-center">
+                      Connecting to chat...
+                    </div>
+                  )}
+
                   {/* Chat Messages Area */}
                   <div className="flex-1 bg-gray-800 bg-opacity-40 rounded-lg p-3 mb-3 overflow-y-auto">
-                    <div className="text-center text-gray-500 text-sm py-8">
-                      Chat coming in Phase 3...
-                    </div>
+                    {messages.length === 0 ? (
+                      <div className="text-center text-gray-500 text-sm py-8">
+                        No messages yet. Be the first to chat!
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {messages.map((msg) => {
+                          const isOwnMessage = user?.walletAddress === msg.walletAddress;
+                          return (
+                            <div
+                              key={msg.id}
+                              className={`${
+                                isOwnMessage ? 'bg-cyan-900 bg-opacity-30' : 'bg-gray-700 bg-opacity-30'
+                              } p-2 rounded-lg`}
+                            >
+                              <div className="flex items-baseline gap-2 mb-1">
+                                <span className="text-cyan-400 text-xs font-bold">
+                                  {msg.username || formatAddress(msg.walletAddress)}
+                                </span>
+                                <span className="text-gray-500 text-xs">
+                                  {formatTimestamp(msg.createdAt)}
+                                </span>
+                              </div>
+                              <div className="text-gray-200 text-sm break-words">
+                                {msg.message}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Chat Input */}
-                  <div className="flex gap-2">
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
                     <input
                       type="text"
-                      disabled
-                      placeholder="Message (coming soon)..."
+                      value={messageInput}
+                      onChange={handleInputChange}
+                      disabled={!isConnected}
+                      placeholder={isConnected ? "Type a message..." : "Connecting..."}
+                      maxLength={500}
                       className="flex-1 bg-gray-800 text-cyan-100 px-3 py-2 rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
                     />
                     <button
-                      disabled
+                      type="submit"
+                      disabled={!isConnected || !messageInput.trim()}
                       className="bg-cyan-600 text-black px-4 py-2 rounded-lg font-bold hover:bg-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Send
                     </button>
-                  </div>
+                  </form>
                 </div>
               )}
             </div>

@@ -747,6 +747,73 @@ const TowerDefenseGame: React.FC = () => {
     }));
   };
 
+  const handleDragStart = (e: React.DragEvent, towerType: TowerTypeId) => {
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('towerType', towerType);
+    playSound('menuClick');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+
+    const towerType = e.dataTransfer.getData('towerType') as TowerTypeId;
+    if (!towerType || gameState.gameStatus !== 'playing') return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const towerTypeConfig = TOWER_TYPES.find(t => t.type === towerType);
+    if (!towerTypeConfig || gameState.money < towerTypeConfig.cost) return;
+
+    // Check if on path
+    const onPath = gameState.path.some(point =>
+      Math.abs(point.x - x) < GRID_SIZE && Math.abs(point.y - y) < GRID_SIZE
+    );
+    if (onPath) return;
+
+    // Check distance from other towers
+    const tooClose = gameState.towers.some(tower =>
+      getDistance(tower.position, { x, y }) < GRID_SIZE
+    );
+    if (tooClose) return;
+
+    const newTower = createTower(towerType, { x, y }, `tower-${towerCounterRef.current++}`);
+
+    playSound('towerPlace');
+    setGameState(prev => ({
+      ...prev,
+      towers: [...prev.towers, newTower],
+      money: prev.money - towerTypeConfig.cost,
+    }));
+  }, [gameState.money, gameState.towers, gameState.path, gameState.gameStatus]);
+
+  const sellTower = (towerId: string) => {
+    const tower = gameState.towers.find(t => t.id === towerId);
+    if (!tower) return;
+
+    const towerConfig = TOWER_TYPES.find(t => t.type === tower.type);
+    if (!towerConfig) return;
+
+    const refundAmount = Math.floor(towerConfig.cost * 0.5);
+
+    playSound('menuClick');
+    setGameState(prev => ({
+      ...prev,
+      towers: prev.towers.filter(t => t.id !== towerId),
+      money: prev.money + refundAmount,
+    }));
+    setSelectedTower(null);
+  };
+
   const filteredTowers = selectedCategory === 'all'
     ? TOWER_TYPES
     : TOWER_TYPES.filter(t => t.category === selectedCategory);
@@ -1014,6 +1081,8 @@ const TowerDefenseGame: React.FC = () => {
             height={GAME_HEIGHT}
             className="border-2 border-cyan-500 shadow-2xl"
             onClick={handleCanvasClick}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           />
 
           {gameState.gameStatus === 'gameOver' && (
@@ -1065,29 +1134,51 @@ const TowerDefenseGame: React.FC = () => {
 
             <div className="space-y-2">
               {filteredTowers.map(tower => (
-                <button
+                <div
                   key={tower.type}
-                  onClick={() => selectTower(tower.type)}
-                  disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
-                  className={`w-full p-3 rounded-lg text-left transition-all ${
-                    gameState.selectedTowerType === tower.type
-                      ? 'bg-cyan-600 text-black border border-cyan-400'
-                      : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
-                  } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  draggable={gameState.money >= tower.cost && gameState.gameStatus === 'playing'}
+                  onDragStart={(e) => handleDragStart(e, tower.type)}
+                  className="group"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{tower.icon}</span>
-                    <div className="flex-1">
-                      <div className="font-bold text-sm">{tower.name}</div>
-                      <div className="text-xs text-cyan-400 font-bold">${tower.cost}</div>
+                  <button
+                    onClick={() => selectTower(tower.type)}
+                    disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
+                    className={`w-full p-3 rounded-lg text-left transition-all ${
+                      gameState.selectedTowerType === tower.type
+                        ? 'bg-cyan-600 text-black border border-cyan-400'
+                        : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
+                    } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : 'cursor-move'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{tower.icon}</span>
+                      <div className="flex-1">
+                        <div className="font-bold text-sm">{tower.name}</div>
+                        <div className="text-xs text-cyan-400 font-bold">${tower.cost}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
-                  {tower.specialAbility && (
-                    <div className="text-xs text-cyan-300 mt-1">⚡ {tower.specialAbility.description}</div>
-                  )}
-                </button>
+                    <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
+                    {tower.specialAbility && (
+                      <div className="text-xs text-cyan-300 mt-1">⚡ {tower.specialAbility.description}</div>
+                    )}
+                  </button>
+                </div>
               ))}
+
+              {/* Selected Tower Info & Sell */}
+              {selectedTower && (
+                <div className="mt-4 p-3 bg-gray-800 rounded-lg border border-cyan-500">
+                  <h3 className="text-cyan-400 font-bold mb-2">Selected Tower</h3>
+                  <div className="text-sm text-gray-300 mb-2">
+                    {TOWER_TYPES.find(t => t.type === selectedTower.type)?.name}
+                  </div>
+                  <button
+                    onClick={() => sellTower(selectedTower.id)}
+                    className="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all"
+                  >
+                    💰 Sell for ${Math.floor(TOWER_TYPES.find(t => t.type === selectedTower.type)!.cost * 0.5)}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
