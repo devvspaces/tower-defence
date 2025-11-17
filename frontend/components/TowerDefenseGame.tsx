@@ -1088,20 +1088,53 @@ const TowerDefenseGame: React.FC = () => {
           />
 
           {gameState.gameStatus === 'gameOver' && (
-            <div className="mt-4 text-3xl font-bold bg-gray-900 px-8 py-4 rounded-lg border border-cyan-500 animate-pulse">
-              <div className="text-cyan-400">CITADEL BREACHED</div>
-              <div className="text-gray-400 text-xl mt-2">Final Score: {gameState.score} | Waves Survived: {gameState.wave}</div>
-              <button
-                onClick={() => {
-                  playSound('menuClick');
-                  setScreen('menu');
-                  // Switch back to main menu music
-                  playTrack('main');
-                }}
-                className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-black rounded-lg text-lg font-bold"
-              >
-                Return to Menu
-              </button>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-md">
+              <div className="text-center max-w-2xl mx-4">
+                <div className="mb-8">
+                  <h2 className="text-7xl font-bold text-red-500 mb-2 animate-pulse" style={{
+                    textShadow: '0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4)'
+                  }}>
+                    CITADEL BREACHED
+                  </h2>
+                  <div className="text-cyan-400 text-3xl font-bold mb-4">MISSION FAILED</div>
+                </div>
+
+                <div className="bg-gray-900 bg-opacity-70 border-2 border-cyan-500 rounded-lg p-8 mb-8">
+                  <div className="grid grid-cols-2 gap-6 text-xl">
+                    <div className="text-center">
+                      <div className="text-gray-400 text-sm mb-2">Final Score</div>
+                      <div className="text-cyan-400 font-bold text-3xl">{gameState.score.toLocaleString()}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-gray-400 text-sm mb-2">Waves Survived</div>
+                      <div className="text-purple-400 font-bold text-3xl">{gameState.wave}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() => {
+                      playSound('menuClick');
+                      setScreen('menu');
+                      // Switch back to main menu music
+                      playTrack('main');
+                    }}
+                    className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border-2 border-cyan-500 text-xl transition-all hover:scale-105"
+                  >
+                    📋 Return to Menu
+                  </button>
+                  <button
+                    onClick={() => {
+                      playSound('menuClick');
+                      startGame();
+                    }}
+                    className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-8 rounded-lg border-2 border-cyan-400 text-xl transition-all hover:scale-105"
+                  >
+                    🚀 Start New Game
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
