@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { WalletConnectButton } from './Auth/WalletConnect';
 
 interface TopNavProps {
   onOpenSettings: () => void;
@@ -16,11 +17,11 @@ export const TopNav: React.FC<TopNavProps> = ({
   onOpenHelp,
   onOpenProfile,
 }) => {
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, user, signOut } = useAuth();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 bg-black bg-opacity-90 backdrop-blur-sm border-b border-cyan-500">
-      <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
+    <nav className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg">
+      <div className="px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="text-2xl">🏰</div>
@@ -29,6 +30,11 @@ export const TopNav: React.FC<TopNavProps> = ({
           }}>
             ETERNAL CITADEL
           </h1>
+        </div>
+
+        {/* Center - Wallet Connect */}
+        <div className="flex-1 flex justify-center">
+          <WalletConnectButton />
         </div>
 
         {/* Action Icons */}
@@ -72,18 +78,6 @@ export const TopNav: React.FC<TopNavProps> = ({
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </button>
-          )}
-
-          {isAuthenticated && (
-            <button
-              onClick={signOut}
-              className="p-2 rounded-lg bg-red-900 bg-opacity-50 text-red-400 hover:bg-red-800 border border-red-700 hover:border-red-500 transition-all"
-              title="Sign Out"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
           )}

@@ -121,8 +121,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`${isOverlay ? 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-start' : ''}`}>
-      <div className={`bg-gray-900 bg-opacity-95 border border-cyan-500 rounded-lg ${isOverlay ? 'h-full max-w-xs w-80 m-4' : 'w-64 h-full'} flex flex-col`}>
+    <div className={`${isOverlay ? 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-start' : 'h-full'}`}>
+      <div className={`bg-gray-900 bg-opacity-95 border border-cyan-500 rounded-lg ${isOverlay ? 'h-full max-w-xs w-80 m-4' : 'w-full h-full'} flex flex-col`}>
         {/* Header with Close Button */}
         {isOverlay && (
           <div className="flex justify-between items-center p-4 border-b border-cyan-500">

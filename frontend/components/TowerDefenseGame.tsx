@@ -908,53 +908,49 @@ const TowerDefenseGame: React.FC = () => {
   // MENU SCREEN
   if (screen === 'menu') {
     return (
-      <>
-        <TopNav
-          onOpenSettings={() => setShowSettings(true)}
-          onOpenInfo={() => setShowInfo(true)}
-          onOpenHelp={() => setShowHelp(true)}
-          onOpenProfile={() => setShowProfile(true)}
-        />
-        <div className="min-h-screen bg-black pt-20 p-4 space-bg">
-          <div className="max-w-[1600px] mx-auto flex gap-4">
-            {/* LEFT PANEL - Sidebar with leaderboards and chat */}
-            <div className="w-80 flex-shrink-0">
-              <Sidebar defaultTab="overall" isOverlay={false} />
-            </div>
+      <div className="min-h-screen bg-black p-4 space-bg flex">
+        {/* LEFT SIDEBAR - Fixed Full Height */}
+        <div className="fixed left-4 top-4 bottom-4 w-80">
+          <Sidebar defaultTab="overall" isOverlay={false} />
+        </div>
 
-            {/* CENTER CONTENT */}
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center max-w-3xl">
-                <h1 className="text-5xl font-bold mb-4 text-cyan-400" style={{
-                  textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
-                }}>
-                  {GAME_LORE.title}
-                </h1>
+        {/* MAIN CONTENT - With left margin for sidebar */}
+        <div className="flex-1 ml-80 pl-4 flex flex-col gap-4">
+          {/* Top Nav */}
+          <TopNav
+            onOpenSettings={() => setShowSettings(true)}
+            onOpenInfo={() => setShowInfo(true)}
+            onOpenHelp={() => setShowHelp(true)}
+            onOpenProfile={() => setShowProfile(true)}
+          />
 
-                {/* Wallet Connect Section */}
-                <div className="mb-6">
-                  <WalletConnectButton />
-                </div>
+          {/* Center Content */}
+          <div className="flex-grow flex items-center justify-center">
+            <div className="text-center max-w-3xl">
+              <h1 className="text-5xl font-bold mb-4 text-cyan-400" style={{
+                textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+              }}>
+                {GAME_LORE.title}
+              </h1>
 
-                <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
-                  <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
-                    {GAME_LORE.intro}
-                  </p>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    {GAME_LORE.story}
-                  </p>
-                </div>
+              <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
+                <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
+                  {GAME_LORE.intro}
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {GAME_LORE.story}
+                </p>
+              </div>
 
-                <button
-                  onClick={startGame}
-                  className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-6 px-12 rounded-lg border border-cyan-400 text-3xl transition-all hover:scale-105 mb-4 w-full"
-                >
-                  🚀 START MISSION
-                </button>
+              <button
+                onClick={startGame}
+                className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-6 px-12 rounded-lg border border-cyan-400 text-3xl transition-all hover:scale-105 mb-4 w-full"
+              >
+                🚀 START MISSION
+              </button>
 
-                <div className="text-cyan-400 text-sm animate-pulse">
-                  Defend the Eternal Citadel from the alien invasion
-                </div>
+              <div className="text-cyan-400 text-sm animate-pulse">
+                Defend the Eternal Citadel from the alien invasion
               </div>
             </div>
           </div>
@@ -969,26 +965,33 @@ const TowerDefenseGame: React.FC = () => {
           settings={settings}
           onUpdateSettings={updateSettings}
         />
-      </>
+      </div>
     );
   }
 
   // GAME SCREEN
   return (
-    <>
-      <TopNav
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenInfo={() => setShowInfo(true)}
-        onOpenHelp={() => setShowHelp(true)}
-        onOpenProfile={() => setShowProfile(true)}
-      />
-      <div className="min-h-screen bg-black p-4 pt-20 space-bg">
-      <div className="flex gap-4 max-w-[1600px] mx-auto">
-        {/* LEFT PANEL - SIDEBAR */}
+    <div className="min-h-screen bg-black p-4 space-bg flex">
+      {/* LEFT SIDEBAR - Fixed Full Height */}
+      <div className="fixed left-4 top-4 bottom-4 w-80">
         <Sidebar defaultTab="leaderboard" isOverlay={false} />
+      </div>
 
-        {/* CENTER - GAME */}
-        <div className="flex-grow flex flex-col items-center">
+      {/* MAIN CONTENT - With left margin for sidebar */}
+      <div className="flex-1 ml-80 pl-4 flex flex-col gap-4">
+        {/* Top Nav */}
+        <TopNav
+          onOpenSettings={() => setShowSettings(true)}
+          onOpenInfo={() => setShowInfo(true)}
+          onOpenHelp={() => setShowHelp(true)}
+          onOpenProfile={() => setShowProfile(true)}
+        />
+
+        {/* Game Content */}
+        <div className="flex gap-4 flex-grow">
+
+          {/* CENTER - GAME */}
+          <div className="flex-grow flex flex-col items-center">
           {/* Fixed height action bar */}
           <div className="mb-3 min-h-[60px] flex gap-2 items-center flex-wrap justify-center">
             <div className="bg-cyan-600 text-black px-4 py-2 rounded-lg font-bold">
@@ -1031,15 +1034,6 @@ const TowerDefenseGame: React.FC = () => {
               className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
             >
               INFO
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setShowSettings(true);
-              }}
-              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
-            >
-              ⚙️
             </button>
             <button
               onClick={() => {
@@ -1137,10 +1131,10 @@ const TowerDefenseGame: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+          </div>
 
-        {/* RIGHT PANEL - TOWERS */}
-        <div className="w-80 flex-shrink-0 flex flex-col gap-4" style={{ maxHeight: '800px' }}>
+          {/* RIGHT PANEL - TOWERS */}
+          <div className="w-80 flex-shrink-0 flex flex-col gap-4" style={{ maxHeight: '800px' }}>
           {/* Defense Systems Box */}
           <div className={`bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
             <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
@@ -1227,6 +1221,7 @@ const TowerDefenseGame: React.FC = () => {
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -1238,8 +1233,7 @@ const TowerDefenseGame: React.FC = () => {
         settings={settings}
         onUpdateSettings={updateSettings}
       />
-      </div>
-    </>
+    </div>
   );
 };
 
