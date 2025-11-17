@@ -45,6 +45,7 @@ import { WalletConnectButton } from './Auth/WalletConnect';
 import { Sidebar } from './Sidebar';
 import { ProfileModal } from './ProfileModal';
 import { SettingsModal } from './SettingsModal';
+import { TopNav } from './TopNav';
 
 type GameScreen = 'menu' | 'playing';
 type SidebarTab = 'leaderboard' | 'overall' | 'chat';
@@ -893,8 +894,15 @@ const TowerDefenseGame: React.FC = () => {
   // MENU SCREEN
   if (screen === 'menu') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4 space-bg">
-        <div className="text-center max-w-4xl">
+      <>
+        <TopNav
+          onOpenSettings={() => setShowSettings(true)}
+          onOpenInfo={() => setShowInfo(true)}
+          onOpenHelp={() => setShowHelp(true)}
+          onOpenProfile={() => setShowProfile(true)}
+        />
+        <div className="min-h-screen bg-black flex items-center justify-center p-4 pt-20 space-bg">
+          <div className="text-center max-w-4xl">
           <h1 className="text-6xl font-bold mb-4 text-cyan-400" style={{
             textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
           }}>
@@ -1004,13 +1012,21 @@ const TowerDefenseGame: React.FC = () => {
           settings={settings}
           onUpdateSettings={updateSettings}
         />
-      </div>
+        </div>
+      </>
     );
   }
 
   // GAME SCREEN
   return (
-    <div className="min-h-screen bg-black p-4 space-bg">
+    <>
+      <TopNav
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenInfo={() => setShowInfo(true)}
+        onOpenHelp={() => setShowHelp(true)}
+        onOpenProfile={() => setShowProfile(true)}
+      />
+      <div className="min-h-screen bg-black p-4 pt-20 space-bg">
       <div className="flex gap-4 max-w-[1600px] mx-auto">
         {/* LEFT PANEL - SIDEBAR */}
         <Sidebar defaultTab="leaderboard" isOverlay={false} />
@@ -1224,7 +1240,8 @@ const TowerDefenseGame: React.FC = () => {
         settings={settings}
         onUpdateSettings={updateSettings}
       />
-    </div>
+      </div>
+    </>
   );
 };
 
