@@ -21,7 +21,7 @@ export type SoundType =
 
 // Using Web Audio API to generate retro sound effects
 class SoundGenerator {
-  private audioContext: AudioContext | null = null;
+  public audioContext: AudioContext | null = null;
   private masterGain: GainNode | null = null;
 
   constructor() {
@@ -261,9 +261,31 @@ class SoundGenerator {
 
 export function useSound(enabled: boolean = true, volume: number = 0.5) {
   const soundGenerator = useRef<SoundGenerator | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     soundGenerator.current = new SoundGenerator();
+
+    // Resume AudioContext after user interaction (required by browsers)
+    const handleInteraction = () => {
+      if (soundGenerator.current?.audioContext?.state === 'suspended') {
+        soundGenerator.current.audioContext.resume().then(() => {
+          setIsReady(true);
+        });
+      } else {
+        setIsReady(true);
+      }
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
   }, []);
 
   useEffect(() => {
@@ -273,7 +295,7 @@ export function useSound(enabled: boolean = true, volume: number = 0.5) {
   }, [volume, enabled]);
 
   const playSound = (type: SoundType) => {
-    if (soundGenerator.current && enabled) {
+    if (soundGenerator.current && enabled && isReady) {
       soundGenerator.current.play(type);
     }
   };

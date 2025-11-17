@@ -18,19 +18,29 @@ export function useMusic(enabled: boolean, volume: number) {
     audio.volume = volume;
     audioRef.current = audio;
 
-    // Try to play on first user interaction
-    const handleInteraction = () => {
-      setIsReady(true);
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
+    // Try to play immediately - if it works, we're ready
+    // This allows music to start during loading if autoplay is allowed
+    const testAutoplay = async () => {
+      try {
+        await audio.play();
+        audio.pause();
+        setIsReady(true);
+      } catch (error) {
+        // Autoplay blocked - wait for user interaction
+        const handleInteraction = () => {
+          setIsReady(true);
+          document.removeEventListener('click', handleInteraction);
+          document.removeEventListener('keydown', handleInteraction);
+        };
+
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('keydown', handleInteraction);
+      }
     };
 
-    document.addEventListener('click', handleInteraction);
-    document.addEventListener('keydown', handleInteraction);
+    testAutoplay();
 
     return () => {
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('keydown', handleInteraction);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
