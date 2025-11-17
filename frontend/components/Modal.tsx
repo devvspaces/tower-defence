@@ -13,8 +13,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-      <div className="bg-gray-900 bg-opacity-95 rounded-lg border-4 border-cyan-500 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
+      <div className="bg-gray-900 bg-opacity-90 rounded-lg border-4 border-cyan-500 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 flex justify-between items-center border-b-4 border-cyan-400">
           <h2 className="text-2xl font-bold text-white retro-text">{title}</h2>
           <button

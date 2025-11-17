@@ -20,7 +20,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   const { isAuthenticated, user, signOut } = useAuth();
 
   return (
-    <nav className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg">
+    <nav className="bg-gray-900 bg-opacity-70 border border-cyan-500 rounded-lg backdrop-blur-sm">
       <div className="px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">

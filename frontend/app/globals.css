@@ -60,7 +60,9 @@ body {
 /* Space Background */
 .space-bg {
   background-color: #0a0a0a;
-  background-image: url('/bg.jpg');
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+    url('/bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

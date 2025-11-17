@@ -50,8 +50,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-      <div className="bg-gray-900 bg-opacity-95 border-2 border-cyan-500 rounded-lg p-6 max-w-md w-full">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
+      <div className="bg-gray-900 bg-opacity-90 border-2 border-cyan-500 rounded-lg p-6 max-w-md w-full shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-cyan-400">PROFILE</h2>
           <button

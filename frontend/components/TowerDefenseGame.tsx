@@ -933,7 +933,7 @@ const TowerDefenseGame: React.FC = () => {
                 {GAME_LORE.title}
               </h1>
 
-              <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
+              <div className="bg-gray-900 bg-opacity-60 border border-cyan-500 rounded-lg backdrop-blur-sm p-8 mb-8">
                 <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
                   {GAME_LORE.intro}
                 </p>
@@ -1034,7 +1034,7 @@ const TowerDefenseGame: React.FC = () => {
 
           {timeUntilWave !== null && timeUntilWave > 0 && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
             <div className="mb-3 flex gap-3 items-center min-h-[48px]">
-              <div className="text-xl font-bold text-cyan-400 bg-gray-900 px-6 py-2 rounded-lg border border-cyan-500">
+              <div className="text-xl font-bold text-cyan-400 bg-gray-900 bg-opacity-70 backdrop-blur-sm px-6 py-2 rounded-lg border border-cyan-500">
                 Next wave in {timeUntilWave}s
               </div>
               <button
@@ -1064,7 +1064,7 @@ const TowerDefenseGame: React.FC = () => {
           />
 
           {gameState.gameStatus === 'gameOver' && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
               <div className="text-center max-w-2xl mx-4">
                 <div className="mb-8">
                   <h2 className="text-7xl font-bold text-red-500 mb-2 animate-pulse" style={{
@@ -1075,7 +1075,7 @@ const TowerDefenseGame: React.FC = () => {
                   <div className="text-cyan-400 text-3xl font-bold mb-4">MISSION FAILED</div>
                 </div>
 
-                <div className="bg-gray-900 bg-opacity-70 border-2 border-cyan-500 rounded-lg p-8 mb-8">
+                <div className="bg-gray-900 bg-opacity-90 border-2 border-cyan-500 rounded-lg p-8 mb-8 shadow-2xl">
                   <div className="grid grid-cols-2 gap-6 text-xl">
                     <div className="text-center">
                       <div className="text-gray-400 text-sm mb-2">Final Score</div>
@@ -1118,7 +1118,7 @@ const TowerDefenseGame: React.FC = () => {
           {/* RIGHT PANEL - TOWERS */}
           <div className="w-80 flex-shrink-0 flex flex-col gap-4" style={{ maxHeight: '800px' }}>
           {/* Defense Systems Box */}
-          <div className={`bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
+          <div className={`bg-gray-900 bg-opacity-70 border border-cyan-500 rounded-lg backdrop-blur-sm p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
             <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -1182,7 +1182,7 @@ const TowerDefenseGame: React.FC = () => {
 
           {/* Sell Tower Box - Separate, Always Visible When Tower Selected */}
           {selectedTower && (
-            <div className="bg-gray-900 bg-opacity-80 border border-red-500 rounded-lg p-4 flex-shrink-0">
+            <div className="bg-gray-900 bg-opacity-70 border border-red-500 rounded-lg backdrop-blur-sm p-4 flex-shrink-0">
               <h3 className="text-red-400 font-bold mb-2 text-center">SELECTED TOWER</h3>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">{TOWER_TYPES.find(t => t.type === selectedTower.type)?.icon}</span>
