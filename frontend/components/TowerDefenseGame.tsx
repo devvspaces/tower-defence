@@ -1020,24 +1020,6 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
-                setShowHelp(true);
-              }}
-              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
-            >
-              ?
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setShowInfo(true);
-              }}
-              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
-            >
-              INFO
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
                 if (window.confirm('Are you sure you want to quit? Your progress will be lost.')) {
                   setScreen('menu');
                   // Switch back to main menu music
@@ -1082,7 +1064,7 @@ const TowerDefenseGame: React.FC = () => {
           />
 
           {gameState.gameStatus === 'gameOver' && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-md">
+            <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
               <div className="text-center max-w-2xl mx-4">
                 <div className="mb-8">
                   <h2 className="text-7xl font-bold text-red-500 mb-2 animate-pulse" style={{
