@@ -259,10 +259,8 @@ class SoundGenerator {
   }
 }
 
-export function useSound() {
+export function useSound(enabled: boolean = true, volume: number = 0.5) {
   const soundGenerator = useRef<SoundGenerator | null>(null);
-  const [volume, setVolume] = useState(0.3);
-  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     soundGenerator.current = new SoundGenerator();
@@ -270,21 +268,17 @@ export function useSound() {
 
   useEffect(() => {
     if (soundGenerator.current) {
-      soundGenerator.current.setVolume(muted ? 0 : volume);
+      soundGenerator.current.setVolume(enabled ? volume : 0);
     }
-  }, [volume, muted]);
+  }, [volume, enabled]);
 
   const playSound = (type: SoundType) => {
-    if (soundGenerator.current && !muted) {
+    if (soundGenerator.current && enabled) {
       soundGenerator.current.play(type);
     }
   };
 
   return {
     playSound,
-    volume,
-    setVolume,
-    muted,
-    setMuted,
   };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAccount, useSignMessage } from 'wagmi';
+import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { SiweMessage } from 'siwe';
 import { apiClient } from '@/lib/api-client';
 
@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { disconnect } = useDisconnect();
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -99,6 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiClient.logout();
       setUser(null);
+      // Disconnect wallet
+      disconnect();
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {

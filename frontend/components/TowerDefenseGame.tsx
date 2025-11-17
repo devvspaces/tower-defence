@@ -36,12 +36,15 @@ import {
   updateEnemyStatusEffects
 } from '@/lib/gameEngine';
 import { useSound } from '@/hooks/useSound';
+import { useSettings } from '@/hooks/useSettings';
+import { useMusic } from '@/hooks/useMusic';
 import { HelpModal, InfoModal } from './Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameRecording } from '@/hooks/useGameRecording';
 import { WalletConnectButton } from './Auth/WalletConnect';
 import { Sidebar } from './Sidebar';
 import { ProfileModal } from './ProfileModal';
+import { SettingsModal } from './SettingsModal';
 
 type GameScreen = 'menu' | 'playing';
 type SidebarTab = 'leaderboard' | 'chat';
@@ -55,6 +58,7 @@ const TowerDefenseGame: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leaderboard');
   const [showProfile, setShowProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
@@ -82,12 +86,17 @@ const TowerDefenseGame: React.FC = () => {
   const projectileCounterRef = useRef<number>(0);
   const lastSoundTime = useRef<{ [key: string]: number }>({});
 
-  const { playSound, muted, setMuted } = useSound();
+  const { settings, updateSettings } = useSettings();
+  const { playSound } = useSound(settings.soundEffectsEnabled, settings.soundEffectsVolume);
+  const { playTrack, stopMusic } = useMusic(settings.musicEnabled, settings.musicVolume);
   const { isAuthenticated, user } = useAuth();
   const { startGame: startRecording, endGame: endRecording, isRecording } = useGameRecording();
 
   // Loading screen effect
   useEffect(() => {
+    // Start playing main theme music
+    playTrack('main');
+
     let progress = 0;
     const interval = setInterval(() => {
       progress += Math.random() * 15;
@@ -117,6 +126,10 @@ const TowerDefenseGame: React.FC = () => {
     playSound('menuClick');
     const newPath = getRandomMapPath();
     setScreen('playing');
+
+    // Switch to game session music
+    playTrack('game-session');
+
     setGameState(prev => ({
       ...prev,
       path: newPath,
@@ -962,11 +975,11 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
-                setMuted(!muted);
+                setShowSettings(true);
               }}
               className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
             >
-              SOUND: {muted ? 'OFF' : 'ON'}
+              ⚙️ SETTINGS
             </button>
           </div>
 
@@ -985,6 +998,12 @@ const TowerDefenseGame: React.FC = () => {
           />
         )}
         <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          settings={settings}
+          onUpdateSettings={updateSettings}
+        />
       </div>
     );
   }
@@ -1044,8 +1063,19 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
+                setShowSettings(true);
+              }}
+              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
+            >
+              ⚙️
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
                 if (window.confirm('Are you sure you want to quit? Your progress will be lost.')) {
                   setScreen('menu');
+                  // Switch back to main menu music
+                  playTrack('main');
                 }
               }}
               className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
@@ -1093,6 +1123,8 @@ const TowerDefenseGame: React.FC = () => {
                 onClick={() => {
                   playSound('menuClick');
                   setScreen('menu');
+                  // Switch back to main menu music
+                  playTrack('main');
                 }}
                 className="mt-4 px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-black rounded-lg text-lg font-bold"
               >
@@ -1186,6 +1218,12 @@ const TowerDefenseGame: React.FC = () => {
 
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onUpdateSettings={updateSettings}
+      />
     </div>
   );
 };
