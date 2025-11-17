@@ -21,6 +21,15 @@ export interface GameRepository {
     wavesCompleted: number;
     completedAt: Date;
   }>>;
+  getOverallLeaderboard(limit?: number): Promise<Array<{
+    userId: string;
+    username: string | null;
+    walletAddress: string;
+    totalScore: number;
+    totalGames: number;
+    bestScore: number;
+    bestWaves: number;
+  }>>;
 }
 
 export const GAME_REPOSITORY = Symbol('GAME_REPOSITORY');

@@ -38,4 +38,8 @@ export class GameService {
   async getLeaderboard(limit: number = 100) {
     return this.gameRepository.getLeaderboard(limit);
   }
+
+  async getOverallLeaderboard(limit: number = 100) {
+    return this.gameRepository.getOverallLeaderboard(limit);
+  }
 }

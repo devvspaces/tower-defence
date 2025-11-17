@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sum, count, max, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '@/shared/database/database.module';
 import { Database } from '@/shared/database/connection';
 import { games, users } from '@/shared/database/schema';
@@ -69,6 +69,34 @@ export class GameRepositoryImpl implements GameRepository {
       .from(games)
       .innerJoin(users, eq(games.userId, users.id))
       .orderBy(desc(games.score))
+      .limit(limit);
+
+    return results;
+  }
+
+  async getOverallLeaderboard(limit: number = 100): Promise<Array<{
+    userId: string;
+    username: string | null;
+    walletAddress: string;
+    totalScore: number;
+    totalGames: number;
+    bestScore: number;
+    bestWaves: number;
+  }>> {
+    const results = await this.db
+      .select({
+        userId: games.userId,
+        username: users.username,
+        walletAddress: users.walletAddress,
+        totalScore: sql<number>`cast(sum(${games.score}) as integer)`.as('total_score'),
+        totalGames: sql<number>`cast(count(*) as integer)`.as('total_games'),
+        bestScore: sql<number>`cast(max(${games.score}) as integer)`.as('best_score'),
+        bestWaves: sql<number>`cast(max(${games.wavesCompleted}) as integer)`.as('best_waves'),
+      })
+      .from(games)
+      .innerJoin(users, eq(games.userId, users.id))
+      .groupBy(games.userId, users.username, users.walletAddress)
+      .orderBy(desc(sql`sum(${games.score})`))
       .limit(limit);
 
     return results;

@@ -31,23 +31,39 @@ export class GameController {
     };
   }
 
+  @Get('leaderboard/overall')
+  async getOverallLeaderboard(@Query('limit') limit?: string) {
+    const leaderboard = await this.gameService.getOverallLeaderboard(
+      limit ? parseInt(limit, 10) : 100,
+    );
+
+    return leaderboard.map((entry, index) => ({
+      rank: index + 1,
+      userId: entry.userId,
+      username: entry.username || `Player ${entry.walletAddress.slice(0, 6)}`,
+      walletAddress: entry.walletAddress,
+      totalScore: entry.totalScore,
+      totalGames: entry.totalGames,
+      bestScore: entry.bestScore,
+      bestWaves: entry.bestWaves,
+    }));
+  }
+
   @Get('leaderboard')
   async getLeaderboard(@Query('limit') limit?: string) {
     const leaderboard = await this.gameService.getLeaderboard(
       limit ? parseInt(limit, 10) : 100,
     );
 
-    return {
-      leaderboard: leaderboard.map((entry, index) => ({
-        rank: index + 1,
-        userId: entry.userId,
-        username: entry.username || `Player ${entry.walletAddress.slice(0, 6)}`,
-        walletAddress: entry.walletAddress,
-        score: entry.score,
-        wavesCompleted: entry.wavesCompleted,
-        completedAt: entry.completedAt,
-      })),
-    };
+    return leaderboard.map((entry, index) => ({
+      rank: index + 1,
+      userId: entry.userId,
+      username: entry.username || `Player ${entry.walletAddress.slice(0, 6)}`,
+      walletAddress: entry.walletAddress,
+      score: entry.score,
+      wavesCompleted: entry.wavesCompleted,
+      completedAt: entry.completedAt,
+    }));
   }
 
   @Get('history')

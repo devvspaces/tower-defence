@@ -43,6 +43,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
-    return this.authService.updateProfile(user.userId, dto);
+    return this.authService.updateProfile(user.sub, dto);
   }
 }
