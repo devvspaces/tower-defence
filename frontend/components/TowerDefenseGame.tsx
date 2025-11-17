@@ -1107,8 +1107,9 @@ const TowerDefenseGame: React.FC = () => {
         </div>
 
         {/* RIGHT PANEL - TOWERS */}
-        <div className="w-80 flex-shrink-0">
-          <div className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4 max-h-[800px] overflow-y-auto">
+        <div className="w-80 flex-shrink-0 flex flex-col gap-4" style={{ maxHeight: '800px' }}>
+          {/* Defense Systems Box */}
+          <div className={`bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
             <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -1167,24 +1168,32 @@ const TowerDefenseGame: React.FC = () => {
                   </button>
                 </div>
               ))}
-
-              {/* Selected Tower Info & Sell */}
-              {selectedTower && (
-                <div className="mt-4 p-3 bg-gray-800 rounded-lg border border-cyan-500">
-                  <h3 className="text-cyan-400 font-bold mb-2">Selected Tower</h3>
-                  <div className="text-sm text-gray-300 mb-2">
-                    {TOWER_TYPES.find(t => t.type === selectedTower.type)?.name}
-                  </div>
-                  <button
-                    onClick={() => sellTower(selectedTower.id)}
-                    className="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all"
-                  >
-                    💰 Sell for ${Math.floor(TOWER_TYPES.find(t => t.type === selectedTower.type)!.cost * 0.5)}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Sell Tower Box - Separate, Always Visible When Tower Selected */}
+          {selectedTower && (
+            <div className="bg-gray-900 bg-opacity-80 border border-red-500 rounded-lg p-4 flex-shrink-0">
+              <h3 className="text-red-400 font-bold mb-2 text-center">SELECTED TOWER</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">{TOWER_TYPES.find(t => t.type === selectedTower.type)?.icon}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-gray-200">
+                    {TOWER_TYPES.find(t => t.type === selectedTower.type)?.name}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    Click tower to deselect
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => sellTower(selectedTower.id)}
+                className="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all border border-red-600"
+              >
+                💰 Sell for ${Math.floor(TOWER_TYPES.find(t => t.type === selectedTower.type)!.cost * 0.5)}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
