@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Tower Defense Game",
-  description: "A classic tower defense game built with Next.js and TypeScript",
+  title: "Chronicles of the Eternal Citadel",
+  description: "A blockchain-based tower defense game with Web3 authentication",
 };
 
 export default function RootLayout({
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
