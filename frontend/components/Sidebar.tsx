@@ -40,9 +40,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setLoading(true);
     try {
       const data = await apiClient.getLeaderboard(10);
-      setLeaderboard(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setLeaderboard(data);
+      } else {
+        console.error('Leaderboard data is not an array:', data);
+        setLeaderboard([]);
+      }
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
+      setLeaderboard([]);
     } finally {
       setLoading(false);
     }

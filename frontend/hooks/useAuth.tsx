@@ -57,6 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, user]);
 
+  // Auto sign-in when wallet connects
+  useEffect(() => {
+    if (isConnected && address && !user && !isLoading) {
+      // Check if we have a valid token first
+      if (!apiClient.isAuthenticated()) {
+        signIn().catch((error) => {
+          console.error('Auto sign-in failed:', error);
+        });
+      }
+    }
+  }, [isConnected, address, user, isLoading]);
+
   const signIn = async () => {
     if (!address) {
       throw new Error('No wallet connected');
