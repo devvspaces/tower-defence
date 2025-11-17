@@ -764,6 +764,20 @@ const TowerDefenseGame: React.FC = () => {
   const handleDragStart = (e: React.DragEvent, towerType: TowerTypeId) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('towerType', towerType);
+
+    // Create custom drag image with only the icon
+    const towerConfig = TOWER_TYPES.find(t => t.type === towerType);
+    if (towerConfig) {
+      const dragIcon = document.createElement('div');
+      dragIcon.style.fontSize = '48px';
+      dragIcon.style.position = 'absolute';
+      dragIcon.style.top = '-1000px';
+      dragIcon.textContent = towerConfig.icon;
+      document.body.appendChild(dragIcon);
+      e.dataTransfer.setDragImage(dragIcon, 24, 24);
+      setTimeout(() => document.body.removeChild(dragIcon), 0);
+    }
+
     playSound('menuClick');
   };
 
