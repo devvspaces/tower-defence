@@ -14,3 +14,8 @@ export class RefreshTokenDto {
 export class LogoutDto {
   refreshToken: string;
 }
+
+export class UpdateProfileDto {
+  username?: string;
+  profilePicture?: string;
+}

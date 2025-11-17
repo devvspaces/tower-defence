@@ -134,6 +134,15 @@ class ApiClient {
     this.clearTokens();
   }
 
+  async updateProfile(data: { username?: string; profilePicture?: string }) {
+    const response = await this.client.patch('/auth/profile', data);
+    const updatedUser = response.data;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    return updatedUser;
+  }
+
   // Game endpoints
   async recordGame(gameData: {
     score: number;

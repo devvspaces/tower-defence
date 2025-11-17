@@ -83,6 +83,16 @@ export class AuthService {
     await this.jwtService.revokeRefreshToken(refreshToken);
   }
 
+  async updateProfile(userId: string, data: { username?: string; profilePicture?: string }): Promise<any> {
+    const user = await this.userRepository.update(userId, data);
+    return {
+      id: user.id,
+      walletAddress: user.walletAddress,
+      username: user.username,
+      profilePicture: user.profilePicture,
+    };
+  }
+
   private cleanupExpiredNonces(): void {
     const now = Date.now();
     for (const [address, data] of nonceStore.entries()) {

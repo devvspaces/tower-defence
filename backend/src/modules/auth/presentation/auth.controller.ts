@@ -1,11 +1,14 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Patch, UseGuards } from '@nestjs/common';
 import { AuthService } from '../application/auth.service';
 import {
   GenerateChallengeDto,
   VerifySignatureDto,
   RefreshTokenDto,
   LogoutDto,
+  UpdateProfileDto,
 } from './dto/auth.dto';
+import { JwtAuthGuard } from '../../../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -34,5 +37,12 @@ export class AuthController {
   async logout(@Body() dto: LogoutDto) {
     await this.authService.logout(dto.refreshToken);
     return { message: 'Logged out successfully' };
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(user.userId, dto);
   }
 }

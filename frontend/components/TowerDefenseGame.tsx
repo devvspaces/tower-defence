@@ -40,8 +40,11 @@ import { HelpModal, InfoModal } from './Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameRecording } from '@/hooks/useGameRecording';
 import { WalletConnectButton } from './Auth/WalletConnect';
+import { Sidebar } from './Sidebar';
+import { ProfileModal } from './ProfileModal';
 
 type GameScreen = 'menu' | 'playing';
+type SidebarTab = 'leaderboard' | 'chat';
 
 const TowerDefenseGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,6 +52,9 @@ const TowerDefenseGame: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leaderboard');
+  const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
@@ -848,6 +854,38 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
+                setSidebarTab('leaderboard');
+                setShowSidebar(true);
+              }}
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
+            >
+              LEADERBOARD
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                setSidebarTab('chat');
+                setShowSidebar(true);
+              }}
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
+            >
+              GLOBAL CHAT
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
+                if (isAuthenticated) {
+                  setShowProfile(true);
+                }
+              }}
+              disabled={!isAuthenticated}
+              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              PROFILE
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
                 setShowHelp(true);
               }}
               className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
@@ -872,6 +910,14 @@ const TowerDefenseGame: React.FC = () => {
 
         <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
         <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+        {showSidebar && (
+          <Sidebar
+            defaultTab={sidebarTab}
+            onClose={() => setShowSidebar(false)}
+            isOverlay={true}
+          />
+        )}
+        <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
       </div>
     );
   }
@@ -880,29 +926,8 @@ const TowerDefenseGame: React.FC = () => {
   return (
     <div className="min-h-screen bg-black p-4 space-bg">
       <div className="flex gap-4 max-w-[1600px] mx-auto">
-        {/* LEFT PANEL - LEADERBOARD */}
-        <div className="w-64 flex-shrink-0">
-          <div className="bg-gray-900 bg-opacity-80 border border-cyan-500 rounded-lg p-4">
-            <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">TOP DEFENDERS</h2>
-            <div className="space-y-2 max-h-[700px] overflow-y-auto">
-              {LEADERBOARD_DATA.map((entry) => (
-                <div
-                  key={entry.rank}
-                  className={`p-2 rounded ${
-                    entry.rank <= 3 ? 'bg-cyan-900 bg-opacity-30 border border-cyan-500' : 'bg-gray-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-cyan-400 font-bold">#{entry.rank}</span>
-                    <span className="text-xs text-gray-400">W{entry.wave}</span>
-                  </div>
-                  <div className="text-white text-sm font-semibold truncate">{entry.name}</div>
-                  <div className="text-cyan-400 text-xs">{entry.score.toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* LEFT PANEL - SIDEBAR */}
+        <Sidebar defaultTab="leaderboard" isOverlay={false} />
 
         {/* CENTER - GAME */}
         <div className="flex-grow flex flex-col items-center">

@@ -44,15 +44,14 @@ export class UserRepositoryImpl implements UserRepository {
     return this.toDomain(result);
   }
 
-  async update(user: User): Promise<User> {
+  async update(id: string, data: Partial<Pick<User, 'username' | 'profilePicture'>>): Promise<User> {
     const [result] = await this.db
       .update(users)
       .set({
-        username: user.username,
-        profilePicture: user.profilePicture,
-        updatedAt: user.updatedAt,
+        ...data,
+        updatedAt: new Date(),
       })
-      .where(eq(users.id, user.id))
+      .where(eq(users.id, id))
       .returning();
 
     return this.toDomain(result);
