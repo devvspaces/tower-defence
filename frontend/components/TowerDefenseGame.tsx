@@ -37,6 +37,9 @@ import {
 } from '@/lib/gameEngine';
 import { useSound } from '@/hooks/useSound';
 import { HelpModal, InfoModal } from './Modal';
+import { useAuth } from '@/hooks/useAuth';
+import { useGameRecording } from '@/hooks/useGameRecording';
+import { WalletConnect } from './Auth/WalletConnect';
 
 type GameScreen = 'menu' | 'playing';
 
@@ -74,6 +77,8 @@ const TowerDefenseGame: React.FC = () => {
   const lastSoundTime = useRef<{ [key: string]: number }>({});
 
   const { playSound, muted, setMuted } = useSound();
+  const { isAuthenticated, user } = useAuth();
+  const { startGame: startRecording, endGame: endRecording, isRecording } = useGameRecording();
 
   // Loading screen effect
   useEffect(() => {
@@ -120,6 +125,11 @@ const TowerDefenseGame: React.FC = () => {
       gameStatus: 'waiting',
       waveStartTime: Date.now() + 5000
     }));
+
+    // Start recording if authenticated
+    if (isAuthenticated) {
+      startRecording();
+    }
   };
 
   // Auto-start waves
@@ -407,6 +417,13 @@ const TowerDefenseGame: React.FC = () => {
     const intervalId = setInterval(gameLoop, 1000 / 60);
     return () => clearInterval(intervalId);
   }, [gameState.gameStatus, screen]);
+
+  // Record game on game over
+  useEffect(() => {
+    if (gameState.gameStatus === 'gameOver' && isAuthenticated && !isRecording) {
+      endRecording(gameState);
+    }
+  }, [gameState.gameStatus, isAuthenticated, isRecording]);
 
   // Wave spawning
   useEffect(() => {
@@ -797,6 +814,12 @@ const TowerDefenseGame: React.FC = () => {
           }}>
             {GAME_LORE.title}
           </h1>
+
+          {/* Wallet Connect Section */}
+          <div className="mb-6">
+            <WalletConnect />
+          </div>
+
           <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
             <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
               {GAME_LORE.intro}
