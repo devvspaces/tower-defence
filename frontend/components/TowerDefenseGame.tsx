@@ -901,110 +901,53 @@ const TowerDefenseGame: React.FC = () => {
           onOpenHelp={() => setShowHelp(true)}
           onOpenProfile={() => setShowProfile(true)}
         />
-        <div className="min-h-screen bg-black flex items-center justify-center p-4 pt-20 space-bg">
-          <div className="text-center max-w-4xl">
-          <h1 className="text-6xl font-bold mb-4 text-cyan-400" style={{
-            textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
-          }}>
-            {GAME_LORE.title}
-          </h1>
+        <div className="min-h-screen bg-black pt-20 p-4 space-bg">
+          <div className="max-w-[1600px] mx-auto flex gap-4">
+            {/* LEFT PANEL - Sidebar with leaderboards and chat */}
+            <div className="w-80 flex-shrink-0">
+              <Sidebar defaultTab="overall" isOverlay={false} />
+            </div>
 
-          {/* Wallet Connect Section */}
-          <div className="mb-6">
-            <WalletConnectButton />
-          </div>
+            {/* CENTER CONTENT */}
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center max-w-3xl">
+                <h1 className="text-5xl font-bold mb-4 text-cyan-400" style={{
+                  textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+                }}>
+                  {GAME_LORE.title}
+                </h1>
 
-          <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
-            <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
-              {GAME_LORE.intro}
-            </p>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {GAME_LORE.story}
-            </p>
-          </div>
+                {/* Wallet Connect Section */}
+                <div className="mb-6">
+                  <WalletConnectButton />
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={startGame}
-              className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              START MISSION
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setShowInfo(true);
-              }}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              INTEL DATABASE
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setSidebarTab('leaderboard');
-                setShowSidebar(true);
-              }}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              LEADERBOARD
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setSidebarTab('chat');
-                setShowSidebar(true);
-              }}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              GLOBAL CHAT
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                if (isAuthenticated) {
-                  setShowProfile(true);
-                }
-              }}
-              disabled={!isAuthenticated}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              PROFILE
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setShowHelp(true);
-              }}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              TRAINING
-            </button>
-            <button
-              onClick={() => {
-                playSound('menuClick');
-                setShowSettings(true);
-              }}
-              className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border border-cyan-400 text-2xl transition-all hover:scale-105"
-            >
-              ⚙️ SETTINGS
-            </button>
-          </div>
+                <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
+                  <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
+                    {GAME_LORE.intro}
+                  </p>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    {GAME_LORE.story}
+                  </p>
+                </div>
 
-          <div className="text-cyan-400 text-sm animate-pulse">
-            Press START MISSION to defend the Eternal Citadel
+                <button
+                  onClick={startGame}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-6 px-12 rounded-lg border border-cyan-400 text-3xl transition-all hover:scale-105 mb-4 w-full"
+                >
+                  🚀 START MISSION
+                </button>
+
+                <div className="text-cyan-400 text-sm animate-pulse">
+                  Defend the Eternal Citadel from the alien invasion
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
         <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
-        {showSidebar && (
-          <Sidebar
-            defaultTab={sidebarTab}
-            onClose={() => setShowSidebar(false)}
-            isOverlay={true}
-          />
-        )}
         <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
         <SettingsModal
           isOpen={showSettings}
@@ -1012,7 +955,6 @@ const TowerDefenseGame: React.FC = () => {
           settings={settings}
           onUpdateSettings={updateSettings}
         />
-        </div>
       </>
     );
   }
