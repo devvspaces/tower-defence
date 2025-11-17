@@ -39,7 +39,7 @@ import { useSound } from '@/hooks/useSound';
 import { HelpModal, InfoModal } from './Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameRecording } from '@/hooks/useGameRecording';
-import { WalletConnect } from './Auth/WalletConnect';
+import { WalletConnectButton } from './Auth/WalletConnect';
 
 type GameScreen = 'menu' | 'playing';
 
@@ -817,7 +817,7 @@ const TowerDefenseGame: React.FC = () => {
 
           {/* Wallet Connect Section */}
           <div className="mb-6">
-            <WalletConnect />
+            <WalletConnectButton />
           </div>
 
           <div className="bg-black bg-opacity-70 border border-cyan-500 rounded-lg p-8 mb-8">
