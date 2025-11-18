@@ -23,7 +23,7 @@ export interface LevelUpReward {
 @Injectable()
 export class ProgressionService {
   constructor(
-    @Inject('DB') private db: Database,
+    @Inject('DATABASE_CONNECTION') private db: Database,
     private xpCalculationService: XPCalculationService,
   ) {}
 

@@ -30,7 +30,7 @@ import * as schema from '../../../shared/database/schema';
 export class ProgressionController {
   constructor(
     private readonly progressionService: ProgressionService,
-    @Inject('DB') private db: Database,
+    @Inject('DATABASE_CONNECTION') private db: Database,
   ) {}
 
   @Get('profile')
