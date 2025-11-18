@@ -2,6 +2,28 @@ import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { GameState } from '@/types/game';
 
+export interface ProgressionResult {
+  xpAwarded: number;
+  leveledUp: boolean;
+  oldLevel: number;
+  newLevel: number;
+  newUnlocks: Array<{
+    type: 'tower_unlock' | 'upgrade_unlock' | 'bonus_xp';
+    value: string;
+    level: number;
+  }>;
+  breakdown: Array<{
+    source: string;
+    amount: number;
+    description: string;
+  }>;
+}
+
+export interface GameRecordResult {
+  game: any;
+  progression: ProgressionResult;
+}
+
 export function useGameRecording() {
   const [isRecording, setIsRecording] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
@@ -10,7 +32,7 @@ export function useGameRecording() {
     setGameStartTime(new Date());
   };
 
-  const endGame = async (finalGameState: GameState) => {
+  const endGame = async (finalGameState: GameState): Promise<GameRecordResult | null> => {
     if (!gameStartTime) {
       console.error('Game was not properly started');
       return null;
@@ -42,6 +64,7 @@ export function useGameRecording() {
         },
       };
 
+      // Backend now returns { game, progression }
       const result = await apiClient.recordGame({
         score: finalGameState.score,
         wavesCompleted: finalGameState.wave,
@@ -50,7 +73,7 @@ export function useGameRecording() {
         completedAt: endTime.toISOString(),
       });
 
-      console.log('Game recorded successfully:', result);
+      console.log('Game recorded with progression:', result);
       return result;
     } catch (error) {
       console.error('Failed to record game:', error);

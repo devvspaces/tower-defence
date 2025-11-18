@@ -40,12 +40,15 @@ import { useSettings } from '@/hooks/useSettings';
 import { useMusic } from '@/hooks/useMusic';
 import { HelpModal, InfoModal } from './Modal';
 import { useAuth } from '@/hooks/useAuth';
-import { useGameRecording } from '@/hooks/useGameRecording';
+import { useGameRecording, GameRecordResult } from '@/hooks/useGameRecording';
 import { WalletConnectButton } from './Auth/WalletConnect';
 import { Sidebar } from './Sidebar';
 import { ProfileModal } from './ProfileModal';
 import { SettingsModal } from './SettingsModal';
 import { TopNav } from './TopNav';
+import { XPRewardScreen } from './XPRewardScreen';
+import { useProgression } from '@/contexts/ProgressionContext';
+import { ProgressionDebug } from './ProgressionDebug';
 
 type GameScreen = 'menu' | 'playing';
 type SidebarTab = 'leaderboard' | 'overall' | 'chat';
@@ -94,6 +97,9 @@ const TowerDefenseGame: React.FC = () => {
   const { playTrack, stopMusic } = useMusic(settings.musicEnabled, settings.musicVolume);
   const { isAuthenticated, user } = useAuth();
   const { startGame: startRecording, endGame: endRecording, isRecording } = useGameRecording();
+  const { progression, towers: progressionTowers, refreshProgression } = useProgression();
+  const [showXPScreen, setShowXPScreen] = useState(false);
+  const [gameRecordResult, setGameRecordResult] = useState<GameRecordResult | null>(null);
 
   // Auto-pause game when modals open
   useEffect(() => {
@@ -465,9 +471,21 @@ const TowerDefenseGame: React.FC = () => {
 
   // Record game on game over
   useEffect(() => {
-    if (gameState.gameStatus === 'gameOver' && isAuthenticated && !isRecording) {
-      endRecording(gameState);
-    }
+    const handleGameOver = async () => {
+      if (gameState.gameStatus === 'gameOver' && isAuthenticated && !isRecording) {
+        const result = await endRecording(gameState);
+
+        if (result) {
+          setGameRecordResult(result);
+          setShowXPScreen(true);
+
+          // Refresh progression context
+          await refreshProgression();
+        }
+      }
+    };
+
+    handleGameOver();
   }, [gameState.gameStatus, isAuthenticated, isRecording]);
 
   // Wave spawning
@@ -867,9 +885,101 @@ const TowerDefenseGame: React.FC = () => {
     setSelectedTower(null);
   };
 
-  const filteredTowers = selectedCategory === 'all'
-    ? TOWER_TYPES
-    : TOWER_TYPES.filter(t => t.category === selectedCategory);
+  const handleCloseXPScreen = () => {
+    setShowXPScreen(false);
+    setGameRecordResult(null);
+    // Return to menu after viewing XP
+    setScreen('menu');
+    playTrack('main');
+    setIsPaused(false);
+    setManuallyPaused(false);
+  };
+
+  // Transform backend progression data to XPRewardScreen format
+  const getXPScreenProps = () => {
+    if (!gameRecordResult || !progression) return null;
+
+    const { progression: progressionResult } = gameRecordResult;
+
+    // Map breakdown
+    const breakdownMap: any = {
+      wavesClearedXP: 0,
+      scoreXP: 0,
+      milestoneXP: 0,
+      perfectDefenseXP: 0,
+      firstWinBonusXP: 0,
+      difficultyMultiplier: 1,
+    };
+
+    progressionResult.breakdown.forEach(item => {
+      if (item.source === 'waves') breakdownMap.wavesClearedXP = item.amount;
+      if (item.source === 'score') breakdownMap.scoreXP = item.amount;
+      if (item.source === 'milestone') breakdownMap.milestoneXP = item.amount;
+      if (item.source === 'perfect_defense') breakdownMap.perfectDefenseXP = item.amount;
+      if (item.source === 'first_win') breakdownMap.firstWinBonusXP = item.amount;
+      if (item.source === 'difficulty_multiplier') {
+        const totalBeforeMultiplier = progressionResult.breakdown
+          .filter(b => b.source !== 'difficulty_multiplier')
+          .reduce((sum, b) => sum + b.amount, 0);
+        breakdownMap.difficultyMultiplier = totalBeforeMultiplier > 0
+          ? progressionResult.xpAwarded / totalBeforeMultiplier
+          : 1;
+      }
+    });
+
+    // Find tower unlock reward
+    const towerUnlock = progressionResult.newUnlocks.find(u => u.type === 'tower_unlock');
+
+    return {
+      gameResult: {
+        wavesCompleted: gameState.wave,
+        score: gameState.score,
+        enemiesKilled: 0, // Could track this in future
+        livesRemaining: gameState.lives,
+        maxLives: STARTING_LIVES,
+        difficulty: 'Normal',
+      },
+      xpBreakdown: breakdownMap,
+      totalXPEarned: progressionResult.xpAwarded,
+      levelInfo: {
+        currentLevel: progressionResult.newLevel,
+        currentXP: progression.xp,
+        xpForNextLevel: progression.xpForNextLevel,
+        xpGainedThisGame: progressionResult.xpAwarded,
+      },
+      levelUpInfo: progressionResult.leveledUp ? {
+        leveledUp: true,
+        oldLevel: progressionResult.oldLevel,
+        newLevel: progressionResult.newLevel,
+        reward: towerUnlock ? {
+          type: 'tower' as const,
+          name: towerUnlock.value,
+          description: `Unlocked at level ${towerUnlock.level}`,
+        } : undefined,
+      } : undefined,
+    };
+  };
+
+  // Filter towers by category and unlock status
+  const getFilteredTowers = () => {
+    let towers = selectedCategory === 'all'
+      ? TOWER_TYPES
+      : TOWER_TYPES.filter(t => t.category === selectedCategory);
+
+    // If authenticated and progression data is available, filter by unlocked status
+    if (isAuthenticated && progressionTowers.length > 0) {
+      const unlockedTowerIds = new Set(
+        progressionTowers.filter(t => t.unlocked).map(t => t.id)
+      );
+
+      // Only show unlocked towers
+      towers = towers.filter(t => unlockedTowerIds.has(t.type));
+    }
+
+    return towers;
+  };
+
+  const filteredTowers = getFilteredTowers();
 
   const getTimeUntilWave = () => {
     if (!gameState.waveStartTime) return null;
@@ -990,6 +1100,9 @@ const TowerDefenseGame: React.FC = () => {
           settings={settings}
           onUpdateSettings={updateSettings}
         />
+
+        {/* Progression Debug Display */}
+        <ProgressionDebug />
       </div>
     );
   }
@@ -1033,6 +1146,23 @@ const TowerDefenseGame: React.FC = () => {
             <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-purple-500">
               {gameState.score}
             </div>
+            {/* XP/Level Display */}
+            {isAuthenticated && progression && (
+              <div className="bg-gray-800 border border-purple-500 rounded-lg px-4 py-2 flex items-center gap-2 min-w-[200px]">
+                <span className="text-blue-400 font-bold">Lvl {progression.level}</span>
+                <div className="flex-1">
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+                      style={{ width: `${(progression.xp / progression.xpForNextLevel) * 100}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {progression.xp}/{progression.xpForNextLevel} XP
+                  </div>
+                </div>
+              </div>
+            )}
             <button
               onClick={useNuke}
               disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing' || isPaused}
@@ -1287,6 +1417,15 @@ const TowerDefenseGame: React.FC = () => {
         settings={settings}
         onUpdateSettings={updateSettings}
       />
+
+      {/* XP Reward Screen */}
+      {showXPScreen && gameRecordResult && getXPScreenProps() && (
+        <XPRewardScreen
+          isOpen={showXPScreen}
+          onClose={handleCloseXPScreen}
+          {...getXPScreenProps()!}
+        />
+      )}
     </div>
   );
 };
