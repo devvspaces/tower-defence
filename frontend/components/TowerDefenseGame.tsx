@@ -202,47 +202,49 @@ const TowerDefenseGame: React.FC = () => {
 
   // Game loop
   useEffect(() => {
-    if (gameState.gameStatus !== 'playing' || screen !== 'playing' || isPaused) return;
+    if (gameState.gameStatus !== 'playing' || screen !== 'playing') return;
 
     const gameLoop = () => {
       const currentTime = Date.now();
       const deltaTime = (currentTime - lastTimeRef.current) / 1000;
       lastTimeRef.current = currentTime;
 
-      setGameState(prevState => {
-        if (prevState.gameStatus !== 'playing') return prevState;
+      // Only update game state if not paused
+      if (!isPaused) {
+        setGameState(prevState => {
+          if (prevState.gameStatus !== 'playing') return prevState;
 
-        let newState = { ...prevState };
+          let newState = { ...prevState };
 
-        // Update enemy status effects
-        newState.enemies = newState.enemies.map(enemy =>
-          updateEnemyStatusEffects(enemy, currentTime, deltaTime)
-        );
+          // Update enemy status effects
+          newState.enemies = newState.enemies.map(enemy =>
+            updateEnemyStatusEffects(enemy, currentTime, deltaTime)
+          );
 
-        // Move enemies
-        newState.enemies = newState.enemies.map(enemy =>
-          moveEnemyAlongPath(enemy, deltaTime, newState.path)
-        );
+          // Move enemies
+          newState.enemies = newState.enemies.map(enemy =>
+            moveEnemyAlongPath(enemy, deltaTime, newState.path)
+          );
 
-        // Check for enemies that reached the end
-        const enemiesThatReached = newState.enemies.filter(enemy =>
-          hasEnemyReachedEnd(enemy, newState.path)
-        );
+          // Check for enemies that reached the end
+          const enemiesThatReached = newState.enemies.filter(enemy =>
+            hasEnemyReachedEnd(enemy, newState.path)
+          );
 
-        // Apply scaled damage and gold theft
-        enemiesThatReached.forEach(enemy => {
-          newState.lives -= enemy.damage; // Scaled damage based on enemy type
-          if (enemy.stealsGold && enemy.stealsGold > 0) {
-            newState.money = Math.max(0, newState.money - enemy.stealsGold);
-          }
-        });
+          // Apply scaled damage and gold theft
+          enemiesThatReached.forEach(enemy => {
+            newState.lives -= enemy.damage; // Scaled damage based on enemy type
+            if (enemy.stealsGold && enemy.stealsGold > 0) {
+              newState.money = Math.max(0, newState.money - enemy.stealsGold);
+            }
+          });
 
-        newState.enemies = newState.enemies.filter(
-          enemy => !hasEnemyReachedEnd(enemy, newState.path)
-        );
+          newState.enemies = newState.enemies.filter(
+            enemy => !hasEnemyReachedEnd(enemy, newState.path)
+          );
 
-        // Update towers
-        newState.towers = newState.towers.map(tower =>
+          // Update towers
+          newState.towers = newState.towers.map(tower =>
           updateTower(tower, newState.enemies, currentTime)
         );
 
@@ -453,12 +455,13 @@ const TowerDefenseGame: React.FC = () => {
         }
 
         return newState;
-      });
+        });
+      }
     };
 
     const intervalId = setInterval(gameLoop, 1000 / 60);
     return () => clearInterval(intervalId);
-  }, [gameState.gameStatus, screen]);
+  }, [gameState.gameStatus, screen, isPaused]);
 
   // Record game on game over
   useEffect(() => {
@@ -706,7 +709,7 @@ const TowerDefenseGame: React.FC = () => {
     setSelectedTower(null);
 
     // Place tower if one is selected for placement
-    if (!gameState.selectedTowerType || gameState.gameStatus !== 'playing') return;
+    if (!gameState.selectedTowerType || gameState.gameStatus !== 'playing' || isPaused) return;
 
     const towerTypeConfig = TOWER_TYPES.find(t => t.type === gameState.selectedTowerType);
     if (!towerTypeConfig) return;
@@ -744,7 +747,7 @@ const TowerDefenseGame: React.FC = () => {
       money: prev.money - towerTypeConfig.cost,
       selectedTowerType: null
     }));
-  }, [gameState.selectedTowerType, gameState.money, gameState.towers, gameState.path, gameState.gameStatus]);
+  }, [gameState.selectedTowerType, gameState.money, gameState.towers, gameState.path, gameState.gameStatus, isPaused]);
 
   const startNextWave = () => {
     if (waveInProgress) return;
@@ -812,7 +815,7 @@ const TowerDefenseGame: React.FC = () => {
     e.preventDefault();
 
     const towerType = e.dataTransfer.getData('towerType') as TowerTypeId;
-    if (!towerType || gameState.gameStatus !== 'playing') return;
+    if (!towerType || gameState.gameStatus !== 'playing' || isPaused) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -844,7 +847,7 @@ const TowerDefenseGame: React.FC = () => {
       towers: [...prev.towers, newTower],
       money: prev.money - towerTypeConfig.cost,
     }));
-  }, [gameState.money, gameState.towers, gameState.path, gameState.gameStatus]);
+  }, [gameState.money, gameState.towers, gameState.path, gameState.gameStatus, isPaused]);
 
   const sellTower = (towerId: string) => {
     const tower = gameState.towers.find(t => t.id === towerId);
@@ -1032,9 +1035,9 @@ const TowerDefenseGame: React.FC = () => {
             </div>
             <button
               onClick={useNuke}
-              disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing'}
+              disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing' || isPaused}
               className={`px-4 py-2 rounded-lg font-bold transition-all ${
-                gameState.nukeCharges > 0 && gameState.enemies.length > 0 && gameState.gameStatus === 'playing'
+                gameState.nukeCharges > 0 && gameState.enemies.length > 0 && gameState.gameStatus === 'playing' && !isPaused
                   ? 'bg-blue-600 text-black hover:bg-purple-500 border border-blue-400'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50 border border-gray-600'
               }`}
@@ -1087,7 +1090,12 @@ const TowerDefenseGame: React.FC = () => {
                   setGameState(prev => ({ ...prev, waveStartTime: null }));
                   startNextWave();
                 }}
-                className="px-6 py-2 rounded-lg font-bold bg-blue-600 text-black hover:bg-purple-500 border border-blue-400 animate-pulse"
+                disabled={isPaused}
+                className={`px-6 py-2 rounded-lg font-bold border transition-all ${
+                  !isPaused
+                    ? 'bg-blue-600 text-black hover:bg-purple-500 border-blue-400 animate-pulse cursor-pointer'
+                    : 'bg-gray-700 text-gray-500 border-gray-600 cursor-not-allowed opacity-50'
+                }`}
               >
                 START WAVE NOW
               </button>
@@ -1213,13 +1221,13 @@ const TowerDefenseGame: React.FC = () => {
               {filteredTowers.map(tower => (
                 <div
                   key={tower.type}
-                  draggable={gameState.money >= tower.cost && gameState.gameStatus === 'playing'}
+                  draggable={gameState.money >= tower.cost && gameState.gameStatus === 'playing' && !isPaused}
                   onDragStart={(e) => handleDragStart(e, tower.type)}
                   className="group"
                 >
                   <button
                     onClick={() => selectTower(tower.type)}
-                    disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
+                    disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing' || isPaused}
                     className={`w-full p-3 rounded-lg text-left transition-all ${
                       gameState.selectedTowerType === tower.type
                         ? 'bg-blue-600 text-black border border-blue-400'
