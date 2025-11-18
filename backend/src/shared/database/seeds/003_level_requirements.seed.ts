@@ -67,9 +67,9 @@ export const levelRequirementsSeed = Array.from({ length: 50 }, (_, index) => {
 
   return {
     level,
-    xp_required: xpRequired,
-    reward_type: rewardType,
-    reward_value: rewardValue,
+    xpRequired: xpRequired,
+    rewardType: rewardType,
+    rewardValue: rewardValue,
   };
 });
 
