@@ -4,6 +4,7 @@ import { DatabaseModule } from './shared/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GameModule } from './modules/game/game.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { ProgressionModule } from './modules/progression/progression.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ChatModule } from './modules/chat/chat.module';
     AuthModule,
     GameModule,
     ChatModule,
+    ProgressionModule,
   ],
 })
 export class AppModule {}
