@@ -20,7 +20,7 @@ import {
 } from './dto/progression.dto';
 import { eq, and } from 'drizzle-orm';
 import { Inject } from '@nestjs/common';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Database } from '../../../shared/database/connection';
 import * as schema from '../../../shared/database/schema';
 
 @ApiTags('progression')
@@ -30,7 +30,7 @@ import * as schema from '../../../shared/database/schema';
 export class ProgressionController {
   constructor(
     private readonly progressionService: ProgressionService,
-    @Inject('DB') private db: NodePgDatabase<typeof schema>,
+    @Inject('DB') private db: Database,
   ) {}
 
   @Get('profile')

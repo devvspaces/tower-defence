@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { eq, and, sql } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Database } from '../../../shared/database/connection';
 import * as schema from '../../../shared/database/schema';
 import { XPCalculationService, GameResult } from './xp-calculation.service';
 
@@ -23,7 +23,7 @@ export interface LevelUpReward {
 @Injectable()
 export class ProgressionService {
   constructor(
-    @Inject('DB') private db: NodePgDatabase<typeof schema>,
+    @Inject('DB') private db: Database,
     private xpCalculationService: XPCalculationService,
   ) {}
 
