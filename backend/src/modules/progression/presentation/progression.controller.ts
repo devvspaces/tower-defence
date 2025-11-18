@@ -44,13 +44,13 @@ export class ProgressionController {
     @CurrentUser() user: any,
   ): Promise<UserProgressionResponseDto> {
     const progression = await this.progressionService.getUserProgression(
-      user.id,
+      user.sub,
     );
 
     const [userData] = await this.db
       .select()
       .from(schema.users)
-      .where(eq(schema.users.id, user.id))
+      .where(eq(schema.users.id, user.sub))
       .limit(1);
 
     return {
@@ -69,7 +69,7 @@ export class ProgressionController {
     type: [TowerDefinitionDto],
   })
   async getAllTowers(@CurrentUser() user: any): Promise<TowerDefinitionDto[]> {
-    return this.progressionService.getAllTowersForUser(user.id);
+    return this.progressionService.getAllTowersForUser(user.sub);
   }
 
   @Get('towers/available')
@@ -83,7 +83,7 @@ export class ProgressionController {
     @CurrentUser() user: any,
   ): Promise<TowerDefinitionDto[]> {
     const allTowers = await this.progressionService.getAllTowersForUser(
-      user.id,
+      user.sub,
     );
     return allTowers.filter((tower) => tower.unlocked);
   }
@@ -119,7 +119,7 @@ export class ProgressionController {
     @CurrentUser() user: any,
     @Body() dto: UpgradeTowerDto,
   ): Promise<UpgradeTowerResponseDto> {
-    return this.progressionService.upgradeTower(user.id, dto.towerType);
+    return this.progressionService.upgradeTower(user.sub, dto.towerType);
   }
 
   @Get('rewards/upcoming')
@@ -130,6 +130,6 @@ export class ProgressionController {
     type: [RewardDto],
   })
   async getUpcomingRewards(@CurrentUser() user: any): Promise<RewardDto[]> {
-    return this.progressionService.getUpcomingRewards(user.id, 10);
+    return this.progressionService.getUpcomingRewards(user.sub, 10);
   }
 }
