@@ -81,6 +81,7 @@ const TowerDefenseGame: React.FC = () => {
   const [waveInProgress, setWaveInProgress] = useState(false);
   const [enemiesSpawnedInWave, setEnemiesSpawnedInWave] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'physical' | 'magic' | 'support' | 'utility' | 'economic' | 'hybrid'>('all');
+  const [isPaused, setIsPaused] = useState(false);
   const lastTimeRef = useRef<number>(Date.now());
   const enemyCounterRef = useRef<number>(0);
   const towerCounterRef = useRef<number>(0);
@@ -92,6 +93,13 @@ const TowerDefenseGame: React.FC = () => {
   const { playTrack, stopMusic } = useMusic(settings.musicEnabled, settings.musicVolume);
   const { isAuthenticated, user } = useAuth();
   const { startGame: startRecording, endGame: endRecording, isRecording } = useGameRecording();
+
+  // Auto-pause game when modals open
+  useEffect(() => {
+    if (screen === 'playing' && (showHelp || showInfo || showProfile || showSettings)) {
+      setIsPaused(true);
+    }
+  }, [showHelp, showInfo, showProfile, showSettings, screen]);
 
   // Loading screen effect
   useEffect(() => {
@@ -131,6 +139,10 @@ const TowerDefenseGame: React.FC = () => {
     // Switch to game session music
     playTrack('game-session');
 
+    // Reset all game state including wave progress
+    setWaveInProgress(false);
+    setEnemiesSpawnedInWave(0);
+
     setGameState(prev => ({
       ...prev,
       path: newPath,
@@ -143,7 +155,8 @@ const TowerDefenseGame: React.FC = () => {
       score: 0,
       nukeCharges: STARTING_NUKES,
       gameStatus: 'waiting',
-      waveStartTime: Date.now() + 5000
+      waveStartTime: Date.now() + 5000,
+      gameStartTime: Date.now()
     }));
 
     // Start recording if authenticated
@@ -154,7 +167,7 @@ const TowerDefenseGame: React.FC = () => {
 
   // Auto-start waves
   useEffect(() => {
-    if (screen !== 'playing') return;
+    if (screen !== 'playing' || isPaused) return;
 
     if (gameState.gameStatus === 'waiting' && gameState.waveStartTime && !waveInProgress) {
       const checkInterval = setInterval(() => {
@@ -176,11 +189,11 @@ const TowerDefenseGame: React.FC = () => {
       }, 100);
       return () => clearInterval(checkInterval);
     }
-  }, [gameState.gameStatus, gameState.waveStartTime, waveInProgress, screen]);
+  }, [gameState.gameStatus, gameState.waveStartTime, waveInProgress, screen, isPaused]);
 
   // Game loop
   useEffect(() => {
-    if (gameState.gameStatus !== 'playing' || screen !== 'playing') return;
+    if (gameState.gameStatus !== 'playing' || screen !== 'playing' || isPaused) return;
 
     const gameLoop = () => {
       const currentTime = Date.now();
@@ -447,7 +460,7 @@ const TowerDefenseGame: React.FC = () => {
 
   // Wave spawning
   useEffect(() => {
-    if (!waveInProgress || gameState.gameStatus !== 'playing' || screen !== 'playing') return;
+    if (!waveInProgress || gameState.gameStatus !== 'playing' || screen !== 'playing' || isPaused) return;
 
     const waveConfig = getWaveEnemies(gameState.wave);
     if (!waveConfig || enemiesSpawnedInWave >= waveConfig.count) {
@@ -483,7 +496,7 @@ const TowerDefenseGame: React.FC = () => {
     }, waveConfig.interval);
 
     return () => clearInterval(spawnInterval);
-  }, [waveInProgress, gameState.wave, enemiesSpawnedInWave, gameState.enemies.length, gameState.gameStatus, screen]);
+  }, [waveInProgress, gameState.wave, enemiesSpawnedInWave, gameState.enemies.length, gameState.gameStatus, screen, isPaused]);
 
   // Render game
   useEffect(() => {
@@ -534,8 +547,8 @@ const TowerDefenseGame: React.FC = () => {
     gameState.towers.forEach(tower => {
       // Show range if tower is selected
       if (selectedTower?.id === tower.id) {
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.15)';
-        ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+        ctx.fillStyle = 'rgba(96, 165, 250, 0.15)';
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.5)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(tower.position.x, tower.position.y, tower.range, 0, Math.PI * 2);
@@ -873,7 +886,7 @@ const TowerDefenseGame: React.FC = () => {
       <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
         {/* Scrolling background text */}
         <div className="absolute inset-0 overflow-hidden opacity-10">
-          <div className="loading-text-scroll text-cyan-500 font-mono text-xs leading-relaxed whitespace-pre">
+          <div className="loading-text-scroll text-purple-500 font-mono text-xs leading-relaxed whitespace-pre">
             {Array(50).fill(loadingTexts).flat().map((text, i) => (
               <div key={i}>{text}</div>
             ))}
@@ -882,8 +895,8 @@ const TowerDefenseGame: React.FC = () => {
 
         {/* Main content */}
         <div className="relative z-10 text-center">
-          <h1 className="text-6xl font-bold mb-8 text-cyan-400" style={{
-            textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+          <h1 className="text-6xl font-bold mb-8 text-blue-400" style={{
+            textShadow: '0 0 20px rgba(96,165,250,0.8), 0 0 40px rgba(96,165,250,0.4)'
           }}>
             CHRONICLES OF THE
             <br />
@@ -891,13 +904,13 @@ const TowerDefenseGame: React.FC = () => {
           </h1>
 
           {/* Progress bar */}
-          <div className="w-96 h-4 bg-gray-800 border-2 border-cyan-500 rounded-full overflow-hidden mx-auto">
+          <div className="w-96 h-4 bg-gray-800 border-2 border-purple-500 rounded-full overflow-hidden mx-auto">
             <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
               style={{ width: `${loadingProgress}%` }}
             />
           </div>
-          <div className="mt-4 text-cyan-400 font-mono">
+          <div className="mt-4 text-blue-400 font-mono">
             Loading... {Math.floor(loadingProgress)}%
           </div>
         </div>
@@ -927,14 +940,14 @@ const TowerDefenseGame: React.FC = () => {
           {/* Center Content */}
           <div className="flex-grow flex items-center justify-center">
             <div className="text-center max-w-3xl">
-              <h1 className="text-5xl font-bold mb-4 text-cyan-400" style={{
-                textShadow: '0 0 20px rgba(0,255,255,0.8), 0 0 40px rgba(0,255,255,0.4)'
+              <h1 className="text-5xl font-bold mb-4 text-blue-400" style={{
+                textShadow: '0 0 20px rgba(96,165,250,0.8), 0 0 40px rgba(96,165,250,0.4)'
               }}>
                 {GAME_LORE.title}
               </h1>
 
-              <div className="bg-gray-900 bg-opacity-60 border border-cyan-500 rounded-lg backdrop-blur-sm p-8 mb-8">
-                <p className="text-cyan-100 text-lg mb-4 leading-relaxed">
+              <div className="bg-gray-900 bg-opacity-60 border border-purple-500 rounded-lg backdrop-blur-sm p-8 mb-8">
+                <p className="text-blue-100 text-lg mb-4 leading-relaxed">
                   {GAME_LORE.intro}
                 </p>
                 <p className="text-gray-400 text-sm leading-relaxed">
@@ -944,12 +957,12 @@ const TowerDefenseGame: React.FC = () => {
 
               <button
                 onClick={startGame}
-                className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-6 px-12 rounded-lg border border-cyan-400 text-3xl transition-all hover:scale-105 mb-4 w-full"
+                className="bg-blue-600 hover:bg-purple-500 text-black font-bold py-6 px-12 rounded-lg border border-blue-400 text-3xl transition-all hover:scale-105 mb-4 w-full"
               >
                 🚀 START MISSION
               </button>
 
-              <div className="text-cyan-400 text-sm animate-pulse">
+              <div className="text-blue-400 text-sm animate-pulse">
                 Defend the Eternal Citadel from the alien invasion
               </div>
             </div>
@@ -985,6 +998,8 @@ const TowerDefenseGame: React.FC = () => {
           onOpenInfo={() => setShowInfo(true)}
           onOpenHelp={() => setShowHelp(true)}
           onOpenProfile={() => setShowProfile(true)}
+          gameInProgress={gameState.gameStatus === 'playing' || gameState.gameStatus === 'waiting'}
+          onPauseGame={() => setIsPaused(true)}
         />
 
         {/* Game Content */}
@@ -994,16 +1009,16 @@ const TowerDefenseGame: React.FC = () => {
           <div className="flex-grow flex flex-col items-center">
           {/* Fixed height action bar */}
           <div className="mb-3 min-h-[60px] flex gap-2 items-center flex-wrap justify-center">
-            <div className="bg-cyan-600 text-black px-4 py-2 rounded-lg font-bold">
+            <div className="bg-blue-600 text-black px-4 py-2 rounded-lg font-bold">
               ${Math.floor(gameState.money)}
             </div>
-            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-cyan-500">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-purple-500">
               ❤️ {gameState.lives}
             </div>
-            <div className="bg-gray-800 text-cyan-400 px-4 py-2 rounded-lg font-bold border border-cyan-500">
+            <div className="bg-gray-800 text-blue-400 px-4 py-2 rounded-lg font-bold border border-purple-500">
               Wave {gameState.wave}
             </div>
-            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-cyan-500">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold border border-purple-500">
               {gameState.score}
             </div>
             <button
@@ -1011,7 +1026,7 @@ const TowerDefenseGame: React.FC = () => {
               disabled={gameState.nukeCharges <= 0 || gameState.enemies.length === 0 || gameState.gameStatus !== 'playing'}
               className={`px-4 py-2 rounded-lg font-bold transition-all ${
                 gameState.nukeCharges > 0 && gameState.enemies.length > 0 && gameState.gameStatus === 'playing'
-                  ? 'bg-cyan-600 text-black hover:bg-cyan-500 border border-cyan-400'
+                  ? 'bg-blue-600 text-black hover:bg-purple-500 border border-blue-400'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50 border border-gray-600'
               }`}
             >
@@ -1020,13 +1035,24 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
+                setIsPaused(!isPaused);
+              }}
+              className="px-4 py-2 rounded-lg font-bold bg-yellow-800 text-yellow-200 hover:bg-yellow-700 border border-yellow-500"
+            >
+              {isPaused ? '▶️ RESUME' : '⏸️ PAUSE'}
+            </button>
+            <button
+              onClick={() => {
+                playSound('menuClick');
                 if (window.confirm('Are you sure you want to quit? Your progress will be lost.')) {
                   setScreen('menu');
                   // Switch back to main menu music
                   playTrack('main');
+                  // Reset pause state
+                  setIsPaused(false);
                 }
               }}
-              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-cyan-500"
+              className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-blue-400 hover:bg-gray-700 border border-purple-500"
             >
               QUIT
             </button>
@@ -1034,7 +1060,7 @@ const TowerDefenseGame: React.FC = () => {
 
           {timeUntilWave !== null && timeUntilWave > 0 && !waveInProgress && gameState.gameStatus !== 'gameOver' && (
             <div className="mb-3 flex gap-3 items-center min-h-[48px]">
-              <div className="text-xl font-bold text-cyan-400 bg-gray-900 bg-opacity-70 backdrop-blur-sm px-6 py-2 rounded-lg border border-cyan-500">
+              <div className="text-xl font-bold text-blue-400 bg-gray-900 bg-opacity-70 backdrop-blur-sm px-6 py-2 rounded-lg border border-purple-500">
                 Next wave in {timeUntilWave}s
               </div>
               <button
@@ -1043,7 +1069,7 @@ const TowerDefenseGame: React.FC = () => {
                   setGameState(prev => ({ ...prev, waveStartTime: null }));
                   startNextWave();
                 }}
-                className="px-6 py-2 rounded-lg font-bold bg-cyan-600 text-black hover:bg-cyan-500 border border-cyan-400 animate-pulse"
+                className="px-6 py-2 rounded-lg font-bold bg-blue-600 text-black hover:bg-purple-500 border border-blue-400 animate-pulse"
               >
                 START WAVE NOW
               </button>
@@ -1057,7 +1083,7 @@ const TowerDefenseGame: React.FC = () => {
             ref={canvasRef}
             width={GAME_WIDTH}
             height={GAME_HEIGHT}
-            className="border-2 border-cyan-500 shadow-2xl"
+            className="border-2 border-purple-500 shadow-2xl"
             onClick={handleCanvasClick}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -1072,14 +1098,14 @@ const TowerDefenseGame: React.FC = () => {
                   }}>
                     CITADEL BREACHED
                   </h2>
-                  <div className="text-cyan-400 text-3xl font-bold mb-4">MISSION FAILED</div>
+                  <div className="text-blue-400 text-3xl font-bold mb-4">MISSION FAILED</div>
                 </div>
 
-                <div className="bg-gray-900 bg-opacity-90 border-2 border-cyan-500 rounded-lg p-8 mb-8 shadow-2xl">
+                <div className="bg-gray-900 bg-opacity-90 border-2 border-purple-500 rounded-lg p-8 mb-8 shadow-2xl">
                   <div className="grid grid-cols-2 gap-6 text-xl">
                     <div className="text-center">
                       <div className="text-gray-400 text-sm mb-2">Final Score</div>
-                      <div className="text-cyan-400 font-bold text-3xl">{gameState.score.toLocaleString()}</div>
+                      <div className="text-blue-400 font-bold text-3xl">{gameState.score.toLocaleString()}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-gray-400 text-sm mb-2">Waves Survived</div>
@@ -1096,7 +1122,7 @@ const TowerDefenseGame: React.FC = () => {
                       // Switch back to main menu music
                       playTrack('main');
                     }}
-                    className="bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold py-4 px-8 rounded-lg border-2 border-cyan-500 text-xl transition-all hover:scale-105"
+                    className="bg-gray-800 hover:bg-gray-700 text-blue-400 font-bold py-4 px-8 rounded-lg border-2 border-purple-500 text-xl transition-all hover:scale-105"
                   >
                     📋 Return to Menu
                   </button>
@@ -1105,7 +1131,7 @@ const TowerDefenseGame: React.FC = () => {
                       playSound('menuClick');
                       startGame();
                     }}
-                    className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-8 rounded-lg border-2 border-cyan-400 text-xl transition-all hover:scale-105"
+                    className="bg-blue-600 hover:bg-purple-500 text-black font-bold py-4 px-8 rounded-lg border-2 border-blue-400 text-xl transition-all hover:scale-105"
                   >
                     🚀 Start New Game
                   </button>
@@ -1118,8 +1144,8 @@ const TowerDefenseGame: React.FC = () => {
           {/* RIGHT PANEL - TOWERS */}
           <div className="w-80 flex-shrink-0 flex flex-col gap-4" style={{ maxHeight: '800px' }}>
           {/* Defense Systems Box */}
-          <div className={`bg-gray-900 bg-opacity-70 border border-cyan-500 rounded-lg backdrop-blur-sm p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
-            <h2 className="text-xl font-bold text-cyan-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
+          <div className={`bg-gray-900 bg-opacity-70 border border-purple-500 rounded-lg backdrop-blur-sm p-4 overflow-y-auto ${selectedTower ? 'flex-1' : ''}`}>
+            <h2 className="text-xl font-bold text-blue-400 mb-4 text-center">DEFENSE SYSTEMS</h2>
 
             <div className="flex gap-2 mb-4 flex-wrap">
               {['all', 'physical', 'magic', 'support', 'utility', 'economic', 'hybrid'].map(cat => (
@@ -1131,8 +1157,8 @@ const TowerDefenseGame: React.FC = () => {
                   }}
                   className={`px-3 py-1 rounded-lg font-semibold text-xs transition-all ${
                     selectedCategory === cat
-                      ? 'bg-cyan-600 text-black border border-cyan-400'
-                      : 'bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700'
+                      ? 'bg-blue-600 text-black border border-blue-400'
+                      : 'bg-gray-800 text-blue-400 hover:bg-gray-700 border border-gray-700'
                   }`}
                 >
                   {cat === 'all' ? 'ALL'
@@ -1159,7 +1185,7 @@ const TowerDefenseGame: React.FC = () => {
                     disabled={gameState.money < tower.cost || gameState.gameStatus !== 'playing'}
                     className={`w-full p-3 rounded-lg text-left transition-all ${
                       gameState.selectedTowerType === tower.type
-                        ? 'bg-cyan-600 text-black border border-cyan-400'
+                        ? 'bg-blue-600 text-black border border-blue-400'
                         : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
                     } ${gameState.money < tower.cost || gameState.gameStatus !== 'playing' ? 'opacity-50 cursor-not-allowed' : 'cursor-move'}`}
                   >
@@ -1167,12 +1193,12 @@ const TowerDefenseGame: React.FC = () => {
                       <span className="text-2xl">{tower.icon}</span>
                       <div className="flex-1">
                         <div className="font-bold text-sm">{tower.name}</div>
-                        <div className="text-xs text-cyan-400 font-bold">${tower.cost}</div>
+                        <div className="text-xs text-blue-400 font-bold">${tower.cost}</div>
                       </div>
                     </div>
                     <div className="text-xs text-gray-300 mt-1">{tower.description}</div>
                     {tower.specialAbility && (
-                      <div className="text-xs text-cyan-300 mt-1">⚡ {tower.specialAbility.description}</div>
+                      <div className="text-xs text-blue-300 mt-1">⚡ {tower.specialAbility.description}</div>
                     )}
                   </button>
                 </div>
@@ -1207,11 +1233,12 @@ const TowerDefenseGame: React.FC = () => {
         </div>
       </div>
 
-      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
-      <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      <HelpModal isOpen={showHelp} onClose={() => { setShowHelp(false); setIsPaused(false); }} />
+      <InfoModal isOpen={showInfo} onClose={() => { setShowInfo(false); setIsPaused(false); }} />
+      <ProfileModal isOpen={showProfile} onClose={() => { setShowProfile(false); setIsPaused(false); }} />
       <SettingsModal
         isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => { setShowSettings(false); setIsPaused(false); }}
         settings={settings}
         onUpdateSettings={updateSettings}
       />

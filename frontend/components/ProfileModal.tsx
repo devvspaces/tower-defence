@@ -51,12 +51,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
-      <div className="bg-gray-900 bg-opacity-90 border-2 border-cyan-500 rounded-lg p-6 max-w-md w-full shadow-2xl">
+      <div className="bg-gray-900 bg-opacity-90 border-2 border-purple-500 rounded-lg p-6 max-w-md w-full shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-cyan-400">PROFILE</h2>
+          <h2 className="text-2xl font-bold text-blue-400">PROFILE</h2>
           <button
             onClick={onClose}
-            className="text-cyan-400 hover:text-cyan-300 text-3xl font-bold leading-none"
+            className="text-blue-400 hover:text-blue-300 text-3xl font-bold leading-none"
           >
             ×
           </button>
@@ -66,8 +66,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           <div className="space-y-6">
             {/* Profile Picture Placeholder */}
             <div className="flex flex-col items-center">
-              <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-cyan-500 mb-3">
-                <svg className="w-12 h-12 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-purple-500 mb-3">
+                <svg className="w-12 h-12 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
@@ -76,7 +76,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
             {/* Wallet Address */}
             <div>
-              <label className="block text-cyan-400 font-bold mb-2">Wallet Address</label>
+              <label className="block text-blue-400 font-bold mb-2">Wallet Address</label>
               <div className="bg-gray-800 px-4 py-3 rounded-lg border border-gray-700 text-gray-300">
                 {formatAddress(user.walletAddress)}
               </div>
@@ -84,14 +84,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
             {/* Username Form */}
             <form onSubmit={handleSubmit}>
-              <label className="block text-cyan-400 font-bold mb-2">Username</label>
+              <label className="block text-blue-400 font-bold mb-2">Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username..."
                 maxLength={20}
-                className="w-full bg-gray-800 text-cyan-100 px-4 py-3 rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none mb-4"
+                className="w-full bg-gray-800 text-blue-100 px-4 py-3 rounded-lg border border-gray-700 focus:border-purple-500 focus:outline-none mb-4"
               />
 
               {error && (
@@ -110,14 +110,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <button
                   type="submit"
                   disabled={loading || !username.trim()}
-                  className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-600 hover:bg-purple-500 text-black font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="bg-gray-700 hover:bg-gray-600 text-cyan-400 font-bold py-3 px-6 rounded-lg transition-all"
+                  className="bg-gray-700 hover:bg-gray-600 text-blue-400 font-bold py-3 px-6 rounded-lg transition-all"
                 >
                   Cancel
                 </button>

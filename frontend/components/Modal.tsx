@@ -14,8 +14,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
-      <div className="bg-gray-900 bg-opacity-90 rounded-lg border-4 border-cyan-500 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 flex justify-between items-center border-b-4 border-cyan-400">
+      <div className="bg-gray-900 bg-opacity-90 rounded-lg border-4 border-purple-500 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 flex justify-between items-center border-b-4 border-blue-400">
           <h2 className="text-2xl font-bold text-white retro-text">{title}</h2>
           <button
             onClick={onClose}
@@ -42,7 +42,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     <Modal isOpen={isOpen} onClose={onClose} title="How to Defend the Citadel">
       <div className="text-white space-y-4">
         <section>
-          <h3 className="text-xl font-bold text-cyan-400 mb-2">🎮 Game Controls</h3>
+          <h3 className="text-xl font-bold text-blue-400 mb-2">🎮 Game Controls</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-300">
             <li><span className="text-yellow-400">Select a Tower:</span> Click on any tower button on the right panel</li>
             <li><span className="text-yellow-400">Place Tower:</span> Click on the game field (not on the path!)</li>
@@ -52,7 +52,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="text-xl font-bold text-cyan-400 mb-2">⚔️ Combat System</h3>
+          <h3 className="text-xl font-bold text-blue-400 mb-2">⚔️ Combat System</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-300">
             <li>Towers automatically target and attack enemies within range</li>
             <li>Towers prioritize enemies furthest along the path</li>
@@ -62,7 +62,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="text-xl font-bold text-cyan-400 mb-2">🌊 Wave System</h3>
+          <h3 className="text-xl font-bold text-blue-400 mb-2">🌊 Wave System</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-300">
             <li>Waves start automatically after 15 seconds</li>
             <li>Clear all enemies to progress to the next wave</li>
@@ -72,7 +72,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="text-xl font-bold text-cyan-400 mb-2">💰 Economy</h3>
+          <h3 className="text-xl font-bold text-blue-400 mb-2">💰 Economy</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-300">
             <li>Start with $600 to build your initial defenses</li>
             <li>Earn money by defeating enemies</li>
@@ -82,7 +82,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="text-xl font-bold text-cyan-400 mb-2">🎯 Strategy Tips</h3>
+          <h3 className="text-xl font-bold text-blue-400 mb-2">🎯 Strategy Tips</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-300">
             <li><span className="text-red-400">Physical towers</span> are cost-effective for consistent damage</li>
             <li><span className="text-purple-400">Magic towers</span> have special effects and AOE damage</li>
@@ -157,8 +157,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
               <p className="text-xs text-gray-300">HP: 120 | Dmg: 2 | $90</p>
               <p className="text-xs text-yellow-400">100% Magic Immune</p>
             </div>
-            <div className="bg-slate-800 p-2 rounded border-l-4 border-cyan-400">
-              <h4 className="font-bold text-cyan-300 text-sm">💎 Crystal Golem</h4>
+            <div className="bg-slate-800 p-2 rounded border-l-4 border-blue-400">
+              <h4 className="font-bold text-blue-300 text-sm">💎 Crystal Golem</h4>
               <p className="text-xs text-gray-300">HP: 300 | Dmg: 3 | $120</p>
               <p className="text-xs text-yellow-400">50% All Resist</p>
             </div>
@@ -195,7 +195,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="text-2xl font-bold text-cyan-400 mb-3">🏰 Defense Systems</h3>
+          <h3 className="text-2xl font-bold text-blue-400 mb-3">🏰 Defense Systems</h3>
 
           <h4 className="text-lg font-bold text-red-300 mt-4 mb-2">⚔️ Physical Attack</h4>
           <div className="space-y-2">
@@ -232,11 +232,11 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
           <h4 className="text-lg font-bold text-blue-300 mt-4 mb-2">🛡️ Support/Magic Defense</h4>
           <div className="space-y-2">
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-cyan-200">❄️ Cryo Stasis Matrix</span> - $200 | Dmg: 5 | Range: 130 | Rate: 1/s
+              <span className="font-bold text-blue-200">❄️ Cryo Stasis Matrix</span> - $200 | Dmg: 5 | Range: 130 | Rate: 1/s
               <p className="text-xs text-gray-400">Freezes enemies in temporal suspension (2s freeze)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">
-              <span className="font-bold text-cyan-200">🌀 Gravity Well</span> - $150 | Dmg: 3 | Range: 150 | Rate: 1.5/s
+              <span className="font-bold text-blue-200">🌀 Gravity Well</span> - $150 | Dmg: 3 | Range: 150 | Rate: 1.5/s
               <p className="text-xs text-gray-400">Warps spacetime to slow enemy movement (50% slow for 3s)</p>
             </div>
             <div className="bg-slate-800 p-2 rounded text-sm">

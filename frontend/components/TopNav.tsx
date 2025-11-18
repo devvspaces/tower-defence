@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { WalletConnectButton } from './Auth/WalletConnect';
 
@@ -9,6 +9,8 @@ interface TopNavProps {
   onOpenInfo: () => void;
   onOpenHelp: () => void;
   onOpenProfile: () => void;
+  gameInProgress?: boolean;
+  onPauseGame?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -16,17 +18,32 @@ export const TopNav: React.FC<TopNavProps> = ({
   onOpenInfo,
   onOpenHelp,
   onOpenProfile,
+  gameInProgress = false,
+  onPauseGame,
 }) => {
   const { isAuthenticated, user, signOut } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogoutClick = () => {
+    if (gameInProgress && onPauseGame) {
+      onPauseGame();
+    }
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    signOut();
+  };
 
   return (
-    <nav className="bg-gray-900 bg-opacity-70 border border-cyan-500 rounded-lg backdrop-blur-sm">
+    <nav className="bg-gray-900 bg-opacity-70 border border-purple-500 rounded-lg backdrop-blur-sm">
       <div className="px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="text-2xl">🏰</div>
-          <h1 className="text-xl font-bold text-cyan-400" style={{
-            textShadow: '0 0 10px rgba(0,255,255,0.5)'
+          <h1 className="text-xl font-bold text-blue-400" style={{
+            textShadow: '0 0 10px rgba(96,165,250,0.5)'
           }}>
             ETERNAL CITADEL
           </h1>
@@ -41,7 +58,7 @@ export const TopNav: React.FC<TopNavProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenSettings}
-            className="p-2 rounded-lg bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 transition-all"
+            className="p-2 rounded-lg bg-gray-800 text-blue-400 hover:bg-gray-700 border border-gray-700 hover:border-purple-500 transition-all"
             title="Settings"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +69,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={onOpenInfo}
-            className="p-2 rounded-lg bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 transition-all"
+            className="p-2 rounded-lg bg-gray-800 text-blue-400 hover:bg-gray-700 border border-gray-700 hover:border-purple-500 transition-all"
             title="Intel Database"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +79,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <button
             onClick={onOpenHelp}
-            className="p-2 rounded-lg bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 transition-all"
+            className="p-2 rounded-lg bg-gray-800 text-blue-400 hover:bg-gray-700 border border-gray-700 hover:border-purple-500 transition-all"
             title="Training"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +90,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           {isAuthenticated && (
             <button
               onClick={onOpenProfile}
-              className="p-2 rounded-lg bg-gray-800 text-cyan-400 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 transition-all"
+              className="p-2 rounded-lg bg-gray-800 text-blue-400 hover:bg-gray-700 border border-gray-700 hover:border-purple-500 transition-all"
               title="Profile"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +101,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           {isAuthenticated && (
             <button
-              onClick={signOut}
+              onClick={handleLogoutClick}
               className="p-2 rounded-lg bg-red-900 bg-opacity-50 text-red-400 hover:bg-red-800 border border-red-700 hover:border-red-500 transition-all"
               title="Sign Out"
             >
@@ -95,6 +112,49 @@ export const TopNav: React.FC<TopNavProps> = ({
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
+          <div className="bg-gray-900 bg-opacity-90 border-2 border-red-500 rounded-lg p-6 max-w-md w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-red-400">⚠️ CONFIRM LOGOUT</h2>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="text-red-400 hover:text-red-300 text-3xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-200">Are you sure you want to sign out?</p>
+
+              {gameInProgress && (
+                <div className="bg-red-900 bg-opacity-30 border border-red-500 text-red-200 p-3 rounded-lg">
+                  <p className="font-bold mb-1">⚠️ WARNING</p>
+                  <p className="text-sm">Your current game is in progress. All game progress will be lost if you log out now.</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg border border-gray-600 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmLogout}
+                  className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-lg border border-red-500 transition-all"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

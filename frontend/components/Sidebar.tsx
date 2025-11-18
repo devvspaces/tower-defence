@@ -122,14 +122,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={`${isOverlay ? 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-start' : 'h-full'}`}>
-      <div className={`bg-gray-900 bg-opacity-70 border border-cyan-500 rounded-lg backdrop-blur-sm ${isOverlay ? 'h-full max-w-xs w-80 m-4' : 'w-full h-full'} flex flex-col`}>
+      <div className={`bg-gray-900 bg-opacity-70 border border-purple-500 rounded-lg backdrop-blur-sm ${isOverlay ? 'h-full max-w-xs w-80 m-4' : 'w-full h-full'} flex flex-col`}>
         {/* Header with Close Button */}
         {isOverlay && (
-          <div className="flex justify-between items-center p-4 border-b border-cyan-500">
-            <h2 className="text-xl font-bold text-cyan-400">COMMAND CENTER</h2>
+          <div className="flex justify-between items-center p-4 border-b border-purple-500">
+            <h2 className="text-xl font-bold text-blue-400">COMMAND CENTER</h2>
             <button
               onClick={onClose}
-              className="text-cyan-400 hover:text-cyan-300 text-2xl font-bold"
+              className="text-blue-400 hover:text-blue-300 text-2xl font-bold"
             >
               ×
             </button>
@@ -142,8 +142,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setActiveTab('leaderboard')}
             className={`flex-1 p-3 rounded-lg transition-all ${
               activeTab === 'leaderboard'
-                ? 'bg-cyan-600 text-black'
-                : 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
+                ? 'bg-blue-600 text-black'
+                : 'bg-gray-800 text-blue-400 hover:bg-gray-700'
             }`}
             title="Best Games"
           >
@@ -155,8 +155,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setActiveTab('overall')}
             className={`flex-1 p-3 rounded-lg transition-all ${
               activeTab === 'overall'
-                ? 'bg-cyan-600 text-black'
-                : 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
+                ? 'bg-blue-600 text-black'
+                : 'bg-gray-800 text-blue-400 hover:bg-gray-700'
             }`}
             title="Overall Rankings"
           >
@@ -168,8 +168,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setActiveTab('chat')}
             className={`flex-1 p-3 rounded-lg transition-all ${
               activeTab === 'chat'
-                ? 'bg-cyan-600 text-black'
-                : 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
+                ? 'bg-blue-600 text-black'
+                : 'bg-gray-800 text-blue-400 hover:bg-gray-700'
             }`}
             title="Global Chat"
           >
@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'leaderboard' && (
             <div>
-              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">BEST GAMES</h3>
+              <h3 className="text-lg font-bold text-blue-400 mb-4 text-center">BEST GAMES</h3>
               {loading ? (
                 <div className="text-center text-gray-400 py-8">Loading...</div>
               ) : leaderboard.length === 0 ? (
@@ -193,16 +193,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {leaderboard.map((entry) => (
                     <div
                       key={entry.rank}
-                      className="bg-gray-800 bg-opacity-60 p-3 rounded-lg border border-gray-700 hover:border-cyan-500 transition-all"
+                      className="bg-gray-800 bg-opacity-60 p-3 rounded-lg border border-gray-700 hover:border-purple-500 transition-all"
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-cyan-400 font-bold text-lg">#{entry.rank}</span>
+                        <span className="text-blue-400 font-bold text-lg">#{entry.rank}</span>
                         <span className="text-gray-300 text-sm flex-1 truncate">
                           {entry.username || formatAddress(entry.walletAddress)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-cyan-300">Score: {entry.score.toLocaleString()}</span>
+                        <span className="text-blue-300">Score: {entry.score.toLocaleString()}</span>
                         <span className="text-gray-400">Wave {entry.wavesCompleted}</span>
                       </div>
                     </div>
@@ -214,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {activeTab === 'overall' && (
             <div>
-              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">TOP DEFENDERS</h3>
+              <h3 className="text-lg font-bold text-blue-400 mb-4 text-center">TOP DEFENDERS</h3>
               {loading ? (
                 <div className="text-center text-gray-400 py-8">Loading...</div>
               ) : overallLeaderboard.length === 0 ? (
@@ -224,16 +224,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {overallLeaderboard.map((entry) => (
                     <div
                       key={entry.rank}
-                      className="bg-gray-800 bg-opacity-60 p-3 rounded-lg border border-gray-700 hover:border-cyan-500 transition-all"
+                      className="bg-gray-800 bg-opacity-60 p-3 rounded-lg border border-gray-700 hover:border-purple-500 transition-all"
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-cyan-400 font-bold text-lg">#{entry.rank}</span>
+                        <span className="text-blue-400 font-bold text-lg">#{entry.rank}</span>
                         <span className="text-gray-300 text-sm flex-1 truncate">
                           {entry.username || formatAddress(entry.walletAddress)}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-xs mt-2">
-                        <span className="text-cyan-300">Total: {entry.totalScore.toLocaleString()}</span>
+                        <span className="text-blue-300">Total: {entry.totalScore.toLocaleString()}</span>
                         <span className="text-purple-300">Games: {entry.totalGames}</span>
                         <span className="text-yellow-300">Best: {entry.bestScore.toLocaleString()}</span>
                         <span className="text-gray-400">Wave {entry.bestWaves}</span>
@@ -247,7 +247,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {activeTab === 'chat' && (
             <div className="flex flex-col h-full">
-              <h3 className="text-lg font-bold text-cyan-400 mb-4 text-center">GLOBAL CHAT</h3>
+              <h3 className="text-lg font-bold text-blue-400 mb-4 text-center">GLOBAL CHAT</h3>
 
               {!isAuthenticated ? (
                 <div className="flex-1 flex items-center justify-center">
@@ -279,11 +279,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <div
                               key={msg.id}
                               className={`${
-                                isOwnMessage ? 'bg-cyan-900 bg-opacity-30' : 'bg-gray-700 bg-opacity-30'
+                                isOwnMessage ? 'bg-blue-900 bg-opacity-30' : 'bg-gray-700 bg-opacity-30'
                               } p-2 rounded-lg`}
                             >
                               <div className="flex items-baseline gap-2 mb-1">
-                                <span className="text-cyan-400 text-xs font-bold">
+                                <span className="text-blue-400 text-xs font-bold">
                                   {msg.username || formatAddress(msg.walletAddress)}
                                 </span>
                                 <span className="text-gray-500 text-xs">
@@ -310,12 +310,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       disabled={!isConnected}
                       placeholder={isConnected ? "Type a message..." : "Connecting..."}
                       maxLength={500}
-                      className="flex-1 bg-gray-800 text-cyan-100 px-3 py-2 rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
+                      className="flex-1 bg-gray-800 text-blue-100 px-3 py-2 rounded-lg border border-gray-700 focus:border-purple-500 focus:outline-none disabled:opacity-50"
                     />
                     <button
                       type="submit"
                       disabled={!isConnected || !messageInput.trim()}
-                      className="bg-cyan-600 text-black px-4 py-2 rounded-lg font-bold hover:bg-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-blue-600 text-black px-4 py-2 rounded-lg font-bold hover:bg-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Send
                     </button>

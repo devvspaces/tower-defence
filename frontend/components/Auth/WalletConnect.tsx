@@ -43,9 +43,9 @@ export function WalletConnectButton() {
                     <button
                       onClick={openConnectModal}
                       type="button"
-                      className="bg-gray-900 hover:bg-gray-800 text-cyan-400 font-bold py-2 px-6 rounded-lg border-2 border-cyan-500 transition-all hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/50"
+                      className="bg-gray-900 hover:bg-gray-800 text-blue-400 font-bold py-2 px-6 rounded-lg border-2 border-purple-500 transition-all hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50"
                       style={{
-                        textShadow: '0 0 10px rgba(0,255,255,0.5)'
+                        textShadow: '0 0 10px rgba(96,165,250,0.5)'
                       }}
                     >
                       🔌 CONNECT WALLET
@@ -70,7 +70,7 @@ export function WalletConnectButton() {
                     <button
                       onClick={openChainModal}
                       type="button"
-                      className="bg-gray-900 hover:bg-gray-800 text-cyan-400 px-3 py-2 rounded-lg border border-cyan-500 transition-all flex items-center gap-2"
+                      className="bg-gray-900 hover:bg-gray-800 text-blue-400 px-3 py-2 rounded-lg border border-purple-500 transition-all flex items-center gap-2"
                     >
                       {chain.hasIcon && (
                         <div
@@ -97,7 +97,7 @@ export function WalletConnectButton() {
                     <button
                       onClick={openAccountModal}
                       type="button"
-                      className="bg-gray-900 hover:bg-gray-800 text-cyan-400 font-bold px-4 py-2 rounded-lg border-2 border-cyan-500 transition-all hover:shadow-lg hover:shadow-cyan-500/30"
+                      className="bg-gray-900 hover:bg-gray-800 text-blue-400 font-bold px-4 py-2 rounded-lg border-2 border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/30"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-sm">
@@ -119,7 +119,7 @@ export function WalletConnectButton() {
       </ConnectButton.Custom>
 
       {isLoading && (
-        <div className="text-cyan-400 text-sm animate-pulse ml-2">
+        <div className="text-blue-400 text-sm animate-pulse ml-2">
           Authenticating...
         </div>
       )}
