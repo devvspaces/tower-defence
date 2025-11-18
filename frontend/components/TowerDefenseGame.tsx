@@ -82,6 +82,7 @@ const TowerDefenseGame: React.FC = () => {
   const [enemiesSpawnedInWave, setEnemiesSpawnedInWave] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'physical' | 'magic' | 'support' | 'utility' | 'economic' | 'hybrid'>('all');
   const [isPaused, setIsPaused] = useState(false);
+  const [manuallyPaused, setManuallyPaused] = useState(false);
   const lastTimeRef = useRef<number>(Date.now());
   const enemyCounterRef = useRef<number>(0);
   const towerCounterRef = useRef<number>(0);
@@ -96,10 +97,16 @@ const TowerDefenseGame: React.FC = () => {
 
   // Auto-pause game when modals open
   useEffect(() => {
-    if (screen === 'playing' && (showHelp || showInfo || showProfile || showSettings)) {
-      setIsPaused(true);
+    if (screen === 'playing') {
+      const anyModalOpen = showHelp || showInfo || showProfile || showSettings;
+      if (anyModalOpen) {
+        setIsPaused(true);
+      } else if (!manuallyPaused) {
+        // Only unpause if user didn't manually pause
+        setIsPaused(false);
+      }
     }
-  }, [showHelp, showInfo, showProfile, showSettings, screen]);
+  }, [showHelp, showInfo, showProfile, showSettings, screen, manuallyPaused]);
 
   // Loading screen effect
   useEffect(() => {
@@ -139,9 +146,11 @@ const TowerDefenseGame: React.FC = () => {
     // Switch to game session music
     playTrack('game-session');
 
-    // Reset all game state including wave progress
+    // Reset all game state including wave progress and pause
     setWaveInProgress(false);
     setEnemiesSpawnedInWave(0);
+    setIsPaused(false);
+    setManuallyPaused(false);
 
     setGameState(prev => ({
       ...prev,
@@ -1035,7 +1044,15 @@ const TowerDefenseGame: React.FC = () => {
             <button
               onClick={() => {
                 playSound('menuClick');
-                setIsPaused(!isPaused);
+                if (isPaused) {
+                  // Resuming
+                  setIsPaused(false);
+                  setManuallyPaused(false);
+                } else {
+                  // Pausing
+                  setIsPaused(true);
+                  setManuallyPaused(true);
+                }
               }}
               className="px-4 py-2 rounded-lg font-bold bg-yellow-800 text-yellow-200 hover:bg-yellow-700 border border-yellow-500"
             >
@@ -1048,8 +1065,9 @@ const TowerDefenseGame: React.FC = () => {
                   setScreen('menu');
                   // Switch back to main menu music
                   playTrack('main');
-                  // Reset pause state
+                  // Reset pause states
                   setIsPaused(false);
+                  setManuallyPaused(false);
                 }
               }}
               className="px-4 py-2 rounded-lg font-bold bg-gray-800 text-blue-400 hover:bg-gray-700 border border-purple-500"
@@ -1079,15 +1097,31 @@ const TowerDefenseGame: React.FC = () => {
             <div className="mb-3 min-h-[48px]"></div>
           )}
 
-          <canvas
-            ref={canvasRef}
-            width={GAME_WIDTH}
-            height={GAME_HEIGHT}
-            className="border-2 border-purple-500 shadow-2xl"
-            onClick={handleCanvasClick}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          />
+          <div className="relative inline-block">
+            <canvas
+              ref={canvasRef}
+              width={GAME_WIDTH}
+              height={GAME_HEIGHT}
+              className="border-2 border-purple-500 shadow-2xl"
+              onClick={handleCanvasClick}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            />
+
+            {/* Pause Indicator */}
+            {isPaused && gameState.gameStatus !== 'gameOver' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+                <div className="text-center">
+                  <h2 className="text-6xl font-bold text-yellow-400 mb-4 animate-pulse" style={{
+                    textShadow: '0 0 30px rgba(250, 204, 21, 0.8), 0 0 60px rgba(250, 204, 21, 0.4)'
+                  }}>
+                    ⏸️ PAUSED
+                  </h2>
+                  <p className="text-xl text-gray-300">Press RESUME to continue</p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {gameState.gameStatus === 'gameOver' && (
             <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
@@ -1121,6 +1155,9 @@ const TowerDefenseGame: React.FC = () => {
                       setScreen('menu');
                       // Switch back to main menu music
                       playTrack('main');
+                      // Reset pause states
+                      setIsPaused(false);
+                      setManuallyPaused(false);
                     }}
                     className="bg-gray-800 hover:bg-gray-700 text-blue-400 font-bold py-4 px-8 rounded-lg border-2 border-purple-500 text-xl transition-all hover:scale-105"
                   >
@@ -1233,12 +1270,12 @@ const TowerDefenseGame: React.FC = () => {
         </div>
       </div>
 
-      <HelpModal isOpen={showHelp} onClose={() => { setShowHelp(false); setIsPaused(false); }} />
-      <InfoModal isOpen={showInfo} onClose={() => { setShowInfo(false); setIsPaused(false); }} />
-      <ProfileModal isOpen={showProfile} onClose={() => { setShowProfile(false); setIsPaused(false); }} />
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
       <SettingsModal
         isOpen={showSettings}
-        onClose={() => { setShowSettings(false); setIsPaused(false); }}
+        onClose={() => setShowSettings(false)}
         settings={settings}
         onUpdateSettings={updateSettings}
       />
