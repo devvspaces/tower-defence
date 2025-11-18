@@ -175,6 +175,37 @@ class ApiClient {
     return response.data;
   }
 
+  // Progression endpoints
+  async getUserProgression() {
+    const response = await this.client.get('/progression/profile');
+    return response.data;
+  }
+
+  async getAllTowers() {
+    const response = await this.client.get('/progression/towers/all');
+    return response.data;
+  }
+
+  async getAvailableTowers() {
+    const response = await this.client.get('/progression/towers/available');
+    return response.data;
+  }
+
+  async getTowerUpgrades(towerType: string) {
+    const response = await this.client.get(`/progression/towers/${towerType}/upgrades`);
+    return response.data;
+  }
+
+  async upgradeTower(towerType: string) {
+    const response = await this.client.post('/progression/towers/upgrade', { towerType });
+    return response.data;
+  }
+
+  async getUpcomingRewards() {
+    const response = await this.client.get('/progression/rewards/upcoming');
+    return response.data;
+  }
+
   // Token management
   getStoredUser() {
     if (typeof window === 'undefined') return null;
