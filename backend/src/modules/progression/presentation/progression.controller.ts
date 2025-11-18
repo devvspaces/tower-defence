@@ -44,13 +44,13 @@ export class ProgressionController {
     @CurrentUser() user: any,
   ): Promise<UserProgressionResponseDto> {
     const progression = await this.progressionService.getUserProgression(
-      user.userId,
+      user.id,
     );
 
     const [userData] = await this.db
       .select()
       .from(schema.users)
-      .where(eq(schema.users.id, user.userId))
+      .where(eq(schema.users.id, user.id))
       .limit(1);
 
     return {
@@ -69,7 +69,7 @@ export class ProgressionController {
     type: [TowerDefinitionDto],
   })
   async getAllTowers(@CurrentUser() user: any): Promise<TowerDefinitionDto[]> {
-    return this.progressionService.getAllTowersForUser(user.userId);
+    return this.progressionService.getAllTowersForUser(user.id);
   }
 
   @Get('towers/available')
@@ -83,7 +83,7 @@ export class ProgressionController {
     @CurrentUser() user: any,
   ): Promise<TowerDefinitionDto[]> {
     const allTowers = await this.progressionService.getAllTowersForUser(
-      user.userId,
+      user.id,
     );
     return allTowers.filter((tower) => tower.unlocked);
   }
@@ -119,7 +119,7 @@ export class ProgressionController {
     @CurrentUser() user: any,
     @Body() dto: UpgradeTowerDto,
   ): Promise<UpgradeTowerResponseDto> {
-    return this.progressionService.upgradeTower(user.userId, dto.towerType);
+    return this.progressionService.upgradeTower(user.id, dto.towerType);
   }
 
   @Get('rewards/upcoming')
@@ -130,6 +130,6 @@ export class ProgressionController {
     type: [RewardDto],
   })
   async getUpcomingRewards(@CurrentUser() user: any): Promise<RewardDto[]> {
-    return this.progressionService.getUpcomingRewards(user.userId, 10);
+    return this.progressionService.getUpcomingRewards(user.id, 10);
   }
 }
