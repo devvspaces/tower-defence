@@ -26,17 +26,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasAttemptedAutoSignIn, setHasAttemptedAutoSignIn] = useState(false);
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedUser = apiClient.getStoredUser();
-    if (storedUser && apiClient.isAuthenticated()) {
-      setUser(storedUser);
-    }
-    setIsLoading(false);
+    const loadUser = async () => {
+      const storedUser = apiClient.getStoredUser();
+      if (storedUser && apiClient.isAuthenticated()) {
+        // Validate token by making a simple API call
+        try {
+          // Test if token is still valid
+          await apiClient.getUserProgression();
+          setUser(storedUser);
+          // Dispatch login event for ProgressionContext
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('auth:login'));
+          }
+        } catch (error) {
+          // Token expired or invalid, clear it
+          console.log('Stored token invalid, clearing...');
+          apiClient.logout();
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadUser();
   }, []);
 
   // Listen for logout events
@@ -51,24 +70,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Auto sign-out if wallet disconnects
+  // Auto sign-out if wallet disconnects and reset auto sign-in flag
   useEffect(() => {
-    if (!isConnected && user) {
-      signOut();
+    if (!isConnected) {
+      setHasAttemptedAutoSignIn(false); // Reset so it can try again on reconnect
+      if (user) {
+        signOut();
+      }
     }
   }, [isConnected, user]);
 
+  // Reset auto sign-in flag when address changes (user switches wallet)
+  useEffect(() => {
+    setHasAttemptedAutoSignIn(false);
+  }, [address]);
+
   // Auto sign-in when wallet connects
   useEffect(() => {
-    if (isConnected && address && !user && !isLoading) {
-      // Check if we have a valid token first
-      if (!apiClient.isAuthenticated()) {
-        signIn().catch((error) => {
+    const attemptAutoSignIn = async () => {
+      // Only attempt once per session to avoid loops
+      if (hasAttemptedAutoSignIn) return;
+
+      // Wait for initial loading to complete
+      if (isLoading) return;
+
+      // Check if wallet is connected, we have an address, but no authenticated user
+      if (isConnected && address && !user) {
+        console.log('Auto sign-in: Wallet connected, attempting SIWE...');
+        setHasAttemptedAutoSignIn(true);
+        try {
+          await signIn();
+        } catch (error) {
           console.error('Auto sign-in failed:', error);
-        });
+          // Don't retry on this page load
+        }
       }
-    }
-  }, [isConnected, address, user, isLoading]);
+    };
+
+    attemptAutoSignIn();
+  }, [isConnected, address, user, isLoading, hasAttemptedAutoSignIn]);
 
   const signIn = async () => {
     if (!address) {
@@ -87,6 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user: authUser } = await apiClient.verifySignature(message, signature);
 
       setUser(authUser);
+
+      // Dispatch login event for ProgressionContext
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:login'));
+      }
+
+      console.log('Sign in successful:', authUser);
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
